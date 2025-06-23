@@ -674,7 +674,7 @@ int AUP_Aed_memAllocate(void* stPtr, const Aed_StaticCfg* pCfg) {
 
   // 3th: create aivad instance
   if (stHdl->aivadInf == NULL) {
-    stHdl->aivadInf = new AUP_MODULE_AIVAD("onnx_model/aivad_b43_ckpt_16.onnx");
+    stHdl->aivadInf = new AUP_MODULE_AIVAD("onnx_model/ten-vad.onnx");
     if (stHdl->aivadInf == NULL) {
       return -1;
     }
