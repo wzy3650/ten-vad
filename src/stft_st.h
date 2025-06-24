@@ -9,8 +9,8 @@
 #define AUP_STFT_MIN(x, y) (((x) > (y)) ? (y) : (x))
 
 typedef struct Analyzer_St_ {
-  void* dynamMemPtr;            // memory pointer holding the dynamic memory
-  size_t dynamMemSize;          // size of the buffer *dynamMemPtr
+  void* dynamMemPtr;    // memory pointer holding the dynamic memory
+  size_t dynamMemSize;  // size of the buffer *dynamMemPtr
 
   // ---------------------------------------------------------------
   // Static Configuration
@@ -29,9 +29,8 @@ typedef struct Analyzer_St_ {
 
   // ---------------------------------------------------------------
   // Variables
-  float* inputQ;     // [stCfg->win_len + 4]
+  float* inputQ;       // [stCfg->win_len + 4]
   float* fftInputBuf;  // [stCfg->fft_size + 4]
-
 } Analyzer_St;
 
 #endif  // __STFT_ST_H__

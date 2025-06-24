@@ -13,8 +13,8 @@
 #define AUP_PE_LPC_ORDER (16)
 
 #define AUP_PE_XCORR_TRAINING_OFFSET (80)  // = 80
-#define AUP_PE_MIN_PERIOD_16KHZ (32)       // stands for 1.333kHz, PITCH_MIN_PERIOD
-#define AUP_PE_MAX_PERIOD_16KHZ (256)      // stands for ~62Hz, PITCH_MAX_PERIOD
+#define AUP_PE_MIN_PERIOD_16KHZ (32)   // stands for 1.333kHz, PITCH_MIN_PERIOD
+#define AUP_PE_MAX_PERIOD_16KHZ (256)  // stands for ~62Hz, PITCH_MAX_PERIOD
 
 #define AUP_PE_LOWPSS_NSEC (5)
 const float AUP_PE_B_2KHZ[AUP_PE_LOWPSS_NSEC][3] = {
@@ -133,11 +133,12 @@ typedef struct PE_St_ {
 
   float tmpFeat[AUP_PE_TOTAL_NFEAT];
 
-  int xCorrOffsetIdx;                               // the oldest frame's index in xCorr Buffer
-  float* xCorrInst;                                 // [maxPeriod]
+  int xCorrOffsetIdx;  // the oldest frame's index in xCorr Buffer
+  float* xCorrInst;    // [maxPeriod]
   float* xCorr[AUP_PE_FEAT_MAX_NFRM * 2];  // [stHdl->nFeat * 2][maxPeriod + 1]
   // circ-buffer [<--->][...]
-  float* xCorrTmp[AUP_PE_FEAT_MAX_NFRM * 2];  // [stHdl->nFeat * 2][maxPeriod + 1]
+  float*
+      xCorrTmp[AUP_PE_FEAT_MAX_NFRM * 2];  // [stHdl->nFeat * 2][maxPeriod + 1]
   // temporarily modified version of xCorr
 
   float frmWeight[AUP_PE_FEAT_MAX_NFRM * 2];

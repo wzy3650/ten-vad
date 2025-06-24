@@ -1,14 +1,14 @@
 /*
  * Copyright (c) [2025] [Agora]. All rights reserved.
- * 
+ *
  * This file contains modified code derived from LPCNet (https://github.com/mozilla/LPCNet),
  * specifically from the following functions:
  *   - compute_frame_features() in lpcnet_enc.cc
  *   - process_superframe() in lpcnet_enc.cc
- * 
+ *
  * Original LPCNet code copyright:
  *   Copyright (c) Mozilla Foundation. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *   1. Redistributions of source code must retain the above copyright notice, 
@@ -19,7 +19,7 @@
  *   3. Neither the name of the copyright holder nor the names of its contributors
  *      may be used to endorse or promote products derived from this software without
  *      specific prior written permission.
- * 
+ *
  * Full license text available in the root directory LICENSE file.
  */
 
@@ -44,17 +44,16 @@ static int AUP_PE_checkStatCfg(PE_StaticCfg* pCfg) {
   }
 
   if (pCfg->fftSz != 256 && pCfg->fftSz != 512 && pCfg->fftSz != 1024) {
-      return -1;
-  }  
+    return -1;
+  }
   if (pCfg->fftSz > AUP_PE_MAX_FFTSIZE) {
     return -1;
   }
   if (pCfg->anaWindowSz > pCfg->fftSz || pCfg->anaWindowSz < pCfg->hopSz) {
     return -1;
   }
-  if (pCfg->hopSz != 64 && pCfg->hopSz != 80 &&
-      pCfg->hopSz != 128 && pCfg->hopSz != 160 &&
-      pCfg->hopSz != 256 && pCfg->hopSz != 512) {
+  if (pCfg->hopSz != 64 && pCfg->hopSz != 80 && pCfg->hopSz != 128 &&
+      pCfg->hopSz != 160 && pCfg->hopSz != 256 && pCfg->hopSz != 512) {
     return -1;
   }
 
@@ -62,9 +61,7 @@ static int AUP_PE_checkStatCfg(PE_StaticCfg* pCfg) {
     pCfg->useLPCPreFiltering = 1;
   }
 
-  if (pCfg->procFs != 2000 && 
-      pCfg->procFs != 4000 && 
-      pCfg->procFs != 8000 &&
+  if (pCfg->procFs != 2000 && pCfg->procFs != 4000 && pCfg->procFs != 8000 &&
       pCfg->procFs != 16000) {
     pCfg->procFs = 4000;
   }
@@ -104,18 +101,18 @@ static int AUP_PE_publishStaticCfg(PE_St* stHdl) {
 
   excBufShiftLen = (int)ceilf(hopSz / (float)stHdl->procResampleRate);
   stHdl->excBufLen = stHdl->maxPeriod + excBufShiftLen + 1;
-  
-  stHdl->nFeat = (int)ceilf(AUP_PE_FEAT_TIME_WINDOW * AUP_PE_FS / ((float)hopSz * 1000.0f));
+
+  stHdl->nFeat = (int)ceilf(AUP_PE_FEAT_TIME_WINDOW * AUP_PE_FS /
+                            ((float)hopSz * 1000.0f));
   stHdl->nFeat = AUP_PE_MIN(stHdl->nFeat, AUP_PE_FEAT_MAX_NFRM);
   stHdl->estDelay = 0;
 
   // publish DCT-table coeff.
   for (idx = 0; idx < AUP_PE_NB_BANDS; idx++) {
     for (jdx = 0; jdx < AUP_PE_NB_BANDS; jdx++) {
-      stHdl->dct_table[idx * AUP_PE_NB_BANDS + jdx] = 
-        cosf((idx + .5f) * jdx * AUP_PE_PI / AUP_PE_NB_BANDS);
-      if (jdx == 0) 
-        stHdl->dct_table[idx * AUP_PE_NB_BANDS + jdx] *= sqrtf(.5f);
+      stHdl->dct_table[idx * AUP_PE_NB_BANDS + jdx] =
+          cosf((idx + .5f) * jdx * AUP_PE_PI / AUP_PE_NB_BANDS);
+      if (jdx == 0) stHdl->dct_table[idx * AUP_PE_NB_BANDS + jdx] *= sqrtf(.5f);
     }
   }
 
@@ -136,7 +133,7 @@ static int AUP_PE_resetVariables(PE_St* stHdl) {
   }
   stHdl->pitch_filt = 0;
 
-   memset(stHdl->tmpFeat, 0, sizeof(stHdl->tmpFeat));
+  memset(stHdl->tmpFeat, 0, sizeof(stHdl->tmpFeat));
 
   stHdl->xCorrOffsetIdx = 0;
   for (idx = 0; idx < (AUP_PE_FEAT_MAX_NFRM * 2); idx++) {
@@ -159,7 +156,8 @@ static int AUP_PE_resetVariables(PE_St* stHdl) {
   return 0;
 }
 
-static int AUP_PE_dynamMemPrepare(PE_St* stHdl, void* memPtrExt, size_t memSize) {
+static int AUP_PE_dynamMemPrepare(PE_St* stHdl, void* memPtrExt,
+                                  size_t memSize) {
   int idx;
 
   int inputResampleBufMemSize = 0;
@@ -176,7 +174,8 @@ static int AUP_PE_dynamMemPrepare(PE_St* stHdl, void* memPtrExt, size_t memSize)
   int totalMemSize = 0;
   char* memPtr = NULL;
 
-  inputResampleBufMemSize = AUP_PE_ALIGN8(sizeof(float) * stHdl->inputResampleBufLen);
+  inputResampleBufMemSize =
+      AUP_PE_ALIGN8(sizeof(float) * stHdl->inputResampleBufLen);
   totalMemSize += inputResampleBufMemSize;
 
   inputQMemSize = AUP_PE_ALIGN8(sizeof(float) * stHdl->inputQLen);
@@ -198,15 +197,18 @@ static int AUP_PE_dynamMemPrepare(PE_St* stHdl, void* memPtrExt, size_t memSize)
 
   xCorrPerFeatMemSize = AUP_PE_ALIGN8(sizeof(float) * (stHdl->maxPeriod + 1));
   xCorrPerFeatTmpMemSize = xCorrPerFeatMemSize;
-  totalMemSize += (xCorrPerFeatMemSize + xCorrPerFeatTmpMemSize) * (stHdl->nFeat * 2);
+  totalMemSize +=
+      (xCorrPerFeatMemSize + xCorrPerFeatTmpMemSize) * (stHdl->nFeat * 2);
 
-  pitchMaxPathRegPerRegMemSize = AUP_PE_ALIGN8(sizeof(float) * (stHdl->maxPeriod));
+  pitchMaxPathRegPerRegMemSize =
+      AUP_PE_ALIGN8(sizeof(float) * (stHdl->maxPeriod));
   totalMemSize += pitchMaxPathRegPerRegMemSize * 2;
 
   pitchPrevPerFeatMemSize = AUP_PE_ALIGN8(sizeof(int) * (stHdl->maxPeriod));
   totalMemSize += pitchPrevPerFeatMemSize * (stHdl->nFeat * 2);
 
-  // if no external memory provided, we are only profiling the memory requirement
+  // if no external memory provided, we are only profiling the memory
+  // requirement
   if (memPtrExt == NULL) {
     return (totalMemSize);
   }
@@ -235,7 +237,7 @@ static int AUP_PE_dynamMemPrepare(PE_St* stHdl, void* memPtrExt, size_t memSize)
 
   stHdl->excBufSq = (float*)memPtr;
   memPtr += excBufSqMemSize;
-  
+
   stHdl->xCorrInst = (float*)memPtr;
   memPtr += xCorrInstMemSize;
 
@@ -267,7 +269,9 @@ static int AUP_PE_dynamMemPrepare(PE_St* stHdl, void* memPtrExt, size_t memSize)
   return (totalMemSize);
 }
 
-static void AUP_PE_computeBandEnergy(const float* inBinPower, const int binPowNFFT, float bandE[AUP_PE_NB_BANDS]) {
+static void AUP_PE_computeBandEnergy(const float* inBinPower,
+                                     const int binPowNFFT,
+                                     float bandE[AUP_PE_NB_BANDS]) {
   int i, j, bandSz;
   // float sum[NB_BANDS] = { 0 };
   float frac;
@@ -280,11 +284,12 @@ static void AUP_PE_computeBandEnergy(const float* inBinPower, const int binPowNF
     bandE[i] = 0;
   }
 
-  for (i = 0; i < AUP_PE_NB_BANDS - 1; i++)
-  {
-    bandSz = (int)roundf((AUP_PE_BAND_START_INDEX[i + 1] - AUP_PE_BAND_START_INDEX[i]) * 
-                         indexConvRate);  // WINDOW_SIZE_5MS;
-    indexOffset = (int)roundf(AUP_PE_BAND_START_INDEX[i] * indexConvRate);  // WINDOW_SIZE_5MS;
+  for (i = 0; i < AUP_PE_NB_BANDS - 1; i++) {
+    bandSz = (int)roundf(
+        (AUP_PE_BAND_START_INDEX[i + 1] - AUP_PE_BAND_START_INDEX[i]) *
+        indexConvRate);  // WINDOW_SIZE_5MS;
+    indexOffset = (int)roundf(AUP_PE_BAND_START_INDEX[i] *
+                              indexConvRate);  // WINDOW_SIZE_5MS;
 
     for (j = 0; j < bandSz; j++) {
       frac = (float)j / bandSz;
@@ -300,9 +305,8 @@ static void AUP_PE_computeBandEnergy(const float* inBinPower, const int binPowNF
   return;
 }
 
-
-static void AUP_PE_dct(const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS], 
-  const float* in, float* out) {
+static void AUP_PE_dct(const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS],
+                       const float* in, float* out) {
   int idx, j;
   float sum;
   float ratio = sqrtf(2.0f / AUP_PE_NB_BANDS);
@@ -316,8 +320,8 @@ static void AUP_PE_dct(const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS],
   return;
 }
 
-static void AUP_PE_idct(const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS], 
-  const float* in, float* out) {
+static void AUP_PE_idct(const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS],
+                        const float* in, float* out) {
   int idx, j;
   float sum;
   float ratio = sqrtf(2.0f / AUP_PE_NB_BANDS);
@@ -331,7 +335,9 @@ static void AUP_PE_idct(const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS],
   return;
 }
 
-static void AUP_PE_interp_band_gain(const int nBins, const float bandE[AUP_PE_NB_BANDS], float* g) {
+static void AUP_PE_interp_band_gain(const int nBins,
+                                    const float bandE[AUP_PE_NB_BANDS],
+                                    float* g) {
   int idx, j, bandSz;
   float indexConvRate = 1.0f;
   int fftSz = (nBins - 1) * 2;
@@ -342,9 +348,11 @@ static void AUP_PE_interp_band_gain(const int nBins, const float bandE[AUP_PE_NB
   memset(g, 0, sizeof(float) * nBins);
 
   for (idx = 0; idx < AUP_PE_NB_BANDS - 1; idx++) {
-    bandSz = (int)roundf((AUP_PE_BAND_START_INDEX[idx + 1] - AUP_PE_BAND_START_INDEX[idx]) * 
-                         indexConvRate);  // WINDOW_SIZE_5MS;
-    indexOffset = (int)roundf(AUP_PE_BAND_START_INDEX[idx] * indexConvRate);  // WINDOW_SIZE_5MS;
+    bandSz = (int)roundf(
+        (AUP_PE_BAND_START_INDEX[idx + 1] - AUP_PE_BAND_START_INDEX[idx]) *
+        indexConvRate);  // WINDOW_SIZE_5MS;
+    indexOffset = (int)roundf(AUP_PE_BAND_START_INDEX[idx] *
+                              indexConvRate);  // WINDOW_SIZE_5MS;
 
     for (j = 0; j < bandSz; j++) {
       frac = (float)j / bandSz;
@@ -360,7 +368,8 @@ static void AUP_PE_interp_band_gain(const int nBins, const float bandE[AUP_PE_NB
 // ac: in:  [0...p] autocorrelation values
 // p: in: buffer length of _lpc and rc
 // _lpc: out: [0...p-1] LPC coefficients
-static float AUP_PE_celt_lpc(const float* ac,  const int p, float* _lpc,  float* rc) {
+static float AUP_PE_celt_lpc(const float* ac, const int p, float* _lpc,
+                             float* rc) {
   int i, j;
   float r;
   float error = ac[0];
@@ -377,14 +386,13 @@ static float AUP_PE_celt_lpc(const float* ac,  const int p, float* _lpc,  float*
     for (i = 0; i < p; i++) {
       /* Sum up this iteration's reflection coefficient */
       rr = 0;
-      for (j = 0; j < i; j++)
-        rr += lpc[j] * ac[i - j];
+      for (j = 0; j < i; j++) rr += lpc[j] * ac[i - j];
       rr += ac[i + 1];
       r = (-rr) / error;
       rc[i] = r;
       /*  Update LPC coefficients and total error */
       lpc[i] = r;
-      for (j = 0; j < (i + 1) >> 1; j++) {
+      for (j = 0; j<(i + 1)>> 1; j++) {
         tmp1 = lpc[j];
         tmp2 = lpc[i - 1 - j];
         lpc[j] = tmp1 + (r * tmp2);
@@ -394,24 +402,23 @@ static float AUP_PE_celt_lpc(const float* ac,  const int p, float* _lpc,  float*
       error = error - (r * r * error);
       /* Bail out once we get 30 dB gain */
 
-      if (error < .001f * ac[0])
-        break;
+      if (error < .001f * ac[0]) break;
     }
   }
 
   return error;
 }
 
-static float AUP_PE_lpc_from_bands(const int windowSz, const int nBins, 
-  const float Ex[AUP_PE_NB_BANDS], float lpc[AUP_PE_LPC_ORDER])
-{
+static float AUP_PE_lpc_from_bands(const int windowSz, const int nBins,
+                                   const float Ex[AUP_PE_NB_BANDS],
+                                   float lpc[AUP_PE_LPC_ORDER]) {
   int i;
   float e;
-  float ac[AUP_PE_LPC_ORDER + 1] = { 0 };
-  float rc[AUP_PE_LPC_ORDER] = { 0 };
-  float Xr[AUP_PE_MAX_NBINS] = { 0 };
-  float X_auto[AUP_PE_MAX_FFTSIZE + 4] = { 0 };
-  float x_auto[AUP_PE_MAX_FFTSIZE + 4] = { 0 };
+  float ac[AUP_PE_LPC_ORDER + 1] = {0};
+  float rc[AUP_PE_LPC_ORDER] = {0};
+  float Xr[AUP_PE_MAX_NBINS] = {0};
+  float X_auto[AUP_PE_MAX_FFTSIZE + 4] = {0};
+  float x_auto[AUP_PE_MAX_FFTSIZE + 4] = {0};
   float DC0_BIAS;
   int fftSz = (nBins - 1) * 2;
 
@@ -419,32 +426,32 @@ static float AUP_PE_lpc_from_bands(const int windowSz, const int nBins,
   Xr[nBins - 1] = 0;  // remove nyquist freq.
 
   // RNN_CLEAR(X_auto, FREQ_SIZE);
-  X_auto[0] = Xr[0];   // reformat as complex spectrum data
+  X_auto[0] = Xr[0];  // reformat as complex spectrum data
   X_auto[1] = Xr[nBins - 1];
   for (i = 1; i < (nBins - 1); i++) {
     X_auto[i << 1] = Xr[i];  // give value to its real part
-  } // leave all the imaginary part as 0
+  }                          // leave all the imaginary part as 0
 
-  // inverse_transform(x_auto, X_auto); // IFFT, transform back to time domain (X_auto -> x_auto)
+  // inverse_transform(x_auto, X_auto); // IFFT, transform back to time domain
+  // (X_auto -> x_auto)
   AUP_FFTW_InplaceTransf(0, fftSz, X_auto);
   if (fftSz == 256) {
     AUP_FFTW_c2r_256(X_auto, x_auto);
-  }
-  else if (fftSz == 512) {
+  } else if (fftSz == 512) {
     AUP_FFTW_c2r_512(X_auto, x_auto);
-  }
-  else if (fftSz == 1024) {
+  } else if (fftSz == 1024) {
     AUP_FFTW_c2r_1024(X_auto, x_auto);
   }
   AUP_FFTW_RescaleIFFTOut(fftSz, x_auto);
 
-  for (i = 0; i < (AUP_PE_LPC_ORDER + 1); i++) {  // take only the first LPC_ORDER + 1 coeff.
+  for (i = 0; i < (AUP_PE_LPC_ORDER + 1);
+       i++) {  // take only the first LPC_ORDER + 1 coeff.
     ac[i] = x_auto[i];
   }
 
   // -40 dB noise floor
   DC0_BIAS = (windowSz / 12 / 38.0f);
-  
+
   ac[0] += ac[0] * 1e-4f + DC0_BIAS;
   // Lag windowing
   for (i = 1; i < (AUP_PE_LPC_ORDER + 1); i++) {
@@ -456,15 +463,14 @@ static float AUP_PE_lpc_from_bands(const int windowSz, const int nBins,
   return (e);
 }
 
-
 // lpc_from_cepstrum
-static float AUP_PE_lpcCompute(const int windowSz, 
-  const int nBins, const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS], 
-  const float* cepstrum, float* lpc)
-{
+static float AUP_PE_lpcCompute(
+    const int windowSz, const int nBins,
+    const float DctTable[AUP_PE_NB_BANDS * AUP_PE_NB_BANDS],
+    const float* cepstrum, float* lpc) {
   int i;
-  float Ex[AUP_PE_NB_BANDS] = { 0 };
-  float tmp[AUP_PE_NB_BANDS] = { 0 };
+  float Ex[AUP_PE_NB_BANDS] = {0};
+  float tmp[AUP_PE_NB_BANDS] = {0};
   float errValue = 0;
 
   // RNN_COPY(tmp, cepstrum, NB_BANDS);
@@ -480,8 +486,8 @@ static float AUP_PE_lpcCompute(const int windowSz,
   return (errValue);
 }
 
-static void AUP_PE_xcorr_kernel(const float* x, const float* y, float sum[4], int len)
-{
+static void AUP_PE_xcorr_kernel(const float* x, const float* y, float sum[4],
+                                int len) {
   int j;
   float y_0, y_1, y_2, y_3;
   y_3 = 0; /* gcc doesn't realize that y_3 can't be used uninitialized */
@@ -553,14 +559,14 @@ static float AUP_PE_celt_inner_prod(const float* x, const float* y, int N) {
 }
 
 static void AUP_PE_MvingXCorr(int corrWindowLen, int corrShiftTimes,
-  const float* refIn, const float* yInToShift, float* xcorr)
-{
+                              const float* refIn, const float* yInToShift,
+                              float* xcorr) {
   /* Unrolled version of the pitch correlation -- runs faster on x86 and ARM */
   int i;
   float tmp;
 
   for (i = 0; i < corrShiftTimes - 3; i += 4) {
-    float sum[4] = { 0,0,0,0 };
+    float sum[4] = {0, 0, 0, 0};
     AUP_PE_xcorr_kernel(refIn, yInToShift + i, sum, corrWindowLen);
     xcorr[i] = sum[0];
     xcorr[i + 1] = sum[1];
@@ -597,7 +603,8 @@ int AUP_PE_create(void** stPtr) {
   tmpPtr->dynamMemPtr = NULL;
   tmpPtr->dynamMemSize = 0;
 
-  if (AUP_Biquad_create(&(tmpPtr->biquadIIRPtr)) < 0 || tmpPtr->biquadIIRPtr == NULL) {
+  if (AUP_Biquad_create(&(tmpPtr->biquadIIRPtr)) < 0 ||
+      tmpPtr->biquadIIRPtr == NULL) {
     return -1;
   }
 
@@ -642,7 +649,7 @@ int AUP_PE_destroy(void** stPtr) {
 int AUP_PE_memAllocate(void* stPtr, const PE_StaticCfg* pCfg) {
   PE_St* stHdl = NULL;
   PE_StaticCfg localStCfg;
-  Biquad_StaticCfg biquadStCfg = { 0,0,0,{0},{0},0 };
+  Biquad_StaticCfg biquadStCfg = {0, 0, 0, {0}, {0}, 0};
   int idx;
   int totalMemSize = 0;
 
@@ -684,7 +691,8 @@ int AUP_PE_memAllocate(void* stPtr, const PE_StaticCfg* pCfg) {
   memset(stHdl->dynamMemPtr, 0, stHdl->dynamMemSize);
 
   // setup the pointers/variable
-  if (AUP_PE_dynamMemPrepare(stHdl, stHdl->dynamMemPtr, stHdl->dynamMemSize) < 0) {
+  if (AUP_PE_dynamMemPrepare(stHdl, stHdl->dynamMemPtr, stHdl->dynamMemSize) <
+      0) {
     return -1;
   }
 
@@ -700,23 +708,20 @@ int AUP_PE_memAllocate(void* stPtr, const PE_StaticCfg* pCfg) {
         biquadStCfg.B[idx] = AUP_PE_B_2KHZ[idx];
         biquadStCfg.A[idx] = AUP_PE_A_2KHZ[idx];
       }
-    }
-    else if (stHdl->stCfg.procFs == 4000) {
+    } else if (stHdl->stCfg.procFs == 4000) {
       biquadStCfg.G = AUP_PE_G_4KHZ;
       for (idx = 0; idx < biquadStCfg.nsect; idx++) {
         biquadStCfg.B[idx] = AUP_PE_B_4KHZ[idx];
         biquadStCfg.A[idx] = AUP_PE_A_4KHZ[idx];
       }
-    }
-    else if (stHdl->stCfg.procFs == 8000) {
+    } else if (stHdl->stCfg.procFs == 8000) {
       biquadStCfg.G = AUP_PE_G_8KHZ;
       for (idx = 0; idx < biquadStCfg.nsect; idx++) {
         biquadStCfg.B[idx] = AUP_PE_B_8KHZ[idx];
         biquadStCfg.A[idx] = AUP_PE_A_8KHZ[idx];
       }
     }
-  }
-  else {
+  } else {
     biquadStCfg.nsect = -1;
   }
   if (AUP_Biquad_memAllocate(stHdl->biquadIIRPtr, &biquadStCfg) < 0) {
@@ -802,11 +807,11 @@ int AUP_PE_getAlgDelay(const void* stPtr, int* delayInFrms) {
 
 int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
   PE_St* stHdl = NULL;
-  Biquad_InputData bqInData = { 0,0,0 };
-  Biquad_OutputData bqOutData = { 0 };
+  Biquad_InputData bqInData = {0, 0, 0};
+  Biquad_OutputData bqOutData = {0};
   int nBins, fftSz, hopSz, idx, jdx, sub, offset, tmpInt, xcorrAccIdx;
-  float bandPow[AUP_PE_NB_BANDS] = { 0 }; // Ex
-  float Ly[AUP_PE_NB_BANDS] = { 0 };
+  float bandPow[AUP_PE_NB_BANDS] = {0};  // Ex
+  float Ly[AUP_PE_NB_BANDS] = {0};
   float follow, lpcErr, logMax;
   float energy0, slidWinSum, tmpDenom = 0, maxTrackReg = 0, maxPathReg = 0;
   float frmCorr = 0;  // frmCorrCorrection = 0;
@@ -814,7 +819,7 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
   const float* refSeqPtr = NULL;
   const float* mvSeqPtr = NULL;
   int CORR_HALF_HOPSZ, SIDXT, XCIdx;
-  int bestPeriodEstLocal[AUP_PE_TOTAL_NFEAT * 2] = { 0 };
+  int bestPeriodEstLocal[AUP_PE_TOTAL_NFEAT * 2] = {0};
   float w, sx = 0, sxx = 0, sxy = 0, sy = 0, sw = 0;
   float bestA = 0, bestB = 0;
   float estimatedPeriod;
@@ -823,7 +828,7 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
     return -1;
   }
   stHdl = (PE_St*)(stPtr);
-    
+
   nBins = (int)(stHdl->nBins);
   fftSz = (int)(stHdl->stCfg.fftSz);
   hopSz = (int)(stHdl->stCfg.hopSz);
@@ -858,13 +863,16 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
 
     AUP_PE_dct(stHdl->dct_table, Ly, stHdl->tmpFeat);
 
-    lpcErr = AUP_PE_lpcCompute((int)(stHdl->stCfg.anaWindowSz), nBins, 
-      stHdl->dct_table, stHdl->tmpFeat, stHdl->lpc);
+    lpcErr = AUP_PE_lpcCompute((int)(stHdl->stCfg.anaWindowSz), nBins,
+                               stHdl->dct_table, stHdl->tmpFeat, stHdl->lpc);
 
-    memmove(stHdl->inputQ, stHdl->inputQ + hopSz, sizeof(float) * (stHdl->inputQLen - hopSz));
-    memcpy(&(stHdl->inputQ[stHdl->inputQLen - hopSz]), pIn->timeSignal, sizeof(float) * hopSz);
+    memmove(stHdl->inputQ, stHdl->inputQ + hopSz,
+            sizeof(float) * (stHdl->inputQLen - hopSz));
+    memcpy(&(stHdl->inputQ[stHdl->inputQLen - hopSz]), pIn->timeSignal,
+           sizeof(float) * hopSz);
     // then, take part out into alignedIn for later correlation calculation
-    offset = AUP_PE_MAX(0, stHdl->inputQLen - hopSz - AUP_PE_XCORR_TRAINING_OFFSET);
+    offset =
+        AUP_PE_MAX(0, stHdl->inputQLen - hopSz - AUP_PE_XCORR_TRAINING_OFFSET);
     memcpy(stHdl->alignedIn, stHdl->inputQ + offset, sizeof(float) * hopSz);
 
     for (idx = 0; idx < hopSz; idx++) {
@@ -874,8 +882,11 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
         slidWinSum += stHdl->lpc[jdx] * stHdl->pitch_mem[jdx];
       }
 
-      memmove(stHdl->pitch_mem + 1, stHdl->pitch_mem, sizeof(float) * (AUP_PE_LPC_ORDER - 1));
-      stHdl->pitch_mem[0] = stHdl->alignedIn[idx];  // push the latest base-sample into the tail of FIFO
+      memmove(stHdl->pitch_mem + 1, stHdl->pitch_mem,
+              sizeof(float) * (AUP_PE_LPC_ORDER - 1));
+      stHdl->pitch_mem[0] =
+          stHdl->alignedIn[idx];  // push the latest base-sample into the tail
+                                  // of FIFO
 
       stHdl->lpcFilterOutBuf[idx] = slidWinSum + 0.7f * stHdl->pitch_filt;
       stHdl->pitch_filt = slidWinSum;
@@ -886,25 +897,31 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
       bqInData.nsamples = (size_t)hopSz;
       bqInData.samplesPtr = (const void*)(stHdl->lpcFilterOutBuf);
       bqInData.sampleType = 1;
-      bqOutData.outputBuff = (void*)(stHdl->inputResampleBuf + stHdl->inputResampleBufIdx);
+      bqOutData.outputBuff =
+          (void*)(stHdl->inputResampleBuf + stHdl->inputResampleBufIdx);
       if (AUP_Biquad_proc(stHdl->biquadIIRPtr, &bqInData, &bqOutData) < 0) {
         return -1;
       }
       tmpInt = stHdl->inputResampleBufIdx;
-      for (idx = tmpInt; idx < (tmpInt + hopSz); idx += stHdl->procResampleRate) {
-        stHdl->inputResampleBuf[stHdl->inputResampleBufIdx] = stHdl->inputResampleBuf[idx];
+      for (idx = tmpInt; idx < (tmpInt + hopSz);
+           idx += stHdl->procResampleRate) {
+        stHdl->inputResampleBuf[stHdl->inputResampleBufIdx] =
+            stHdl->inputResampleBuf[idx];
         stHdl->inputResampleBufIdx++;
       }
       // update the excBuf ....
       tmpInt = stHdl->inputResampleBufIdx;
-      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt, sizeof(float) * (stHdl->excBufLen - tmpInt));
-      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt), stHdl->inputResampleBuf, sizeof(float) * tmpInt);
+      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt,
+              sizeof(float) * (stHdl->excBufLen - tmpInt));
+      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt),
+             stHdl->inputResampleBuf, sizeof(float) * tmpInt);
       stHdl->inputResampleBufIdx = 0;
-    }
-    else {
+    } else {
       tmpInt = hopSz;
-      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt, sizeof(float) * (stHdl->excBufLen - tmpInt));
-      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt), stHdl->lpcFilterOutBuf, sizeof(float) * tmpInt);
+      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt,
+              sizeof(float) * (stHdl->excBufLen - tmpInt));
+      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt),
+             stHdl->lpcFilterOutBuf, sizeof(float) * tmpInt);
     }
 
   } else {
@@ -913,29 +930,35 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
       bqInData.nsamples = (size_t)hopSz;
       bqInData.samplesPtr = (const void*)(pIn->timeSignal);
       bqInData.sampleType = 1;
-      bqOutData.outputBuff = (void*)(stHdl->inputResampleBuf + stHdl->inputResampleBufIdx);
+      bqOutData.outputBuff =
+          (void*)(stHdl->inputResampleBuf + stHdl->inputResampleBufIdx);
       if (AUP_Biquad_proc(stHdl->biquadIIRPtr, &bqInData, &bqOutData) < 0) {
         return -1;
       }
       tmpInt = stHdl->inputResampleBufIdx;
-      for (idx = tmpInt; idx < (tmpInt + hopSz); idx += stHdl->procResampleRate) {
-        stHdl->inputResampleBuf[stHdl->inputResampleBufIdx] = stHdl->inputResampleBuf[idx];
+      for (idx = tmpInt; idx < (tmpInt + hopSz);
+           idx += stHdl->procResampleRate) {
+        stHdl->inputResampleBuf[stHdl->inputResampleBufIdx] =
+            stHdl->inputResampleBuf[idx];
         stHdl->inputResampleBufIdx++;
       }
 
       // update the excBuf ....
       tmpInt = stHdl->inputResampleBufIdx;
-      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt, sizeof(float) * (stHdl->excBufLen - tmpInt));
-      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt), stHdl->inputResampleBuf, sizeof(float) * tmpInt);
+      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt,
+              sizeof(float) * (stHdl->excBufLen - tmpInt));
+      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt),
+             stHdl->inputResampleBuf, sizeof(float) * tmpInt);
       stHdl->inputResampleBufIdx = 0;
-    }
-    else {
+    } else {
       tmpInt = hopSz;
-      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt, sizeof(float) * (stHdl->excBufLen - tmpInt));
-      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt), pIn->timeSignal, sizeof(float) * tmpInt);
+      memmove(stHdl->excBuf, stHdl->excBuf + tmpInt,
+              sizeof(float) * (stHdl->excBufLen - tmpInt));
+      memcpy(stHdl->excBuf + (stHdl->excBufLen - tmpInt), pIn->timeSignal,
+             sizeof(float) * tmpInt);
     }
   }
-  
+
   // prepare for cross-correlation computation ....
   for (idx = 0; idx < stHdl->excBufLen; idx++) {
     stHdl->excBufSq[idx] = (stHdl->excBuf[idx] * stHdl->excBuf[idx]);
@@ -951,10 +974,11 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
   for (sub = 0; sub < 2; sub++) {
     xcorrAccIdx = 2 * (stHdl->xCorrOffsetIdx) + sub;
     offset = sub * CORR_HALF_HOPSZ;
-    
+
     refSeqPtr = stHdl->excBuf + (stHdl->maxPeriod + offset);
     mvSeqPtr = stHdl->excBuf + offset;
-    AUP_PE_MvingXCorr(CORR_HALF_HOPSZ, stHdl->maxPeriod, refSeqPtr, mvSeqPtr, stHdl->xCorrInst);
+    AUP_PE_MvingXCorr(CORR_HALF_HOPSZ, stHdl->maxPeriod, refSeqPtr, mvSeqPtr,
+                      stHdl->xCorrInst);
 
     energy0 = 0;
     startPtr = stHdl->excBufSq + (stHdl->maxPeriod + offset);
@@ -975,7 +999,8 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
 
     for (idx = 1; idx < stHdl->maxPeriod; idx++) {
       // update the slidWinSum
-      slidWinSum = AUP_PE_MAX(0, slidWinSum - stHdl->excBufSq[offset + idx - 1]);
+      slidWinSum =
+          AUP_PE_MAX(0, slidWinSum - stHdl->excBufSq[offset + idx - 1]);
       slidWinSum += stHdl->excBufSq[offset + idx + CORR_HALF_HOPSZ - 1];
 
       tmpDenom = AUP_PE_MAX(1e-12f, slidWinSum + (1 + energy0));
@@ -985,8 +1010,12 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
     // shrink/sharpen the values in xCorr array ...
     for (idx = 0; idx < (stHdl->maxPeriod - 2 * stHdl->minPeriod); idx++) {
       tmpDenom = stHdl->xCorr[xcorrAccIdx][(stHdl->maxPeriod + idx) / 2];
-      tmpDenom = AUP_PE_MAX(tmpDenom, stHdl->xCorr[xcorrAccIdx][(stHdl->maxPeriod + idx + 2) / 2]);
-      tmpDenom = AUP_PE_MAX(tmpDenom, stHdl->xCorr[xcorrAccIdx][(stHdl->maxPeriod + idx - 1) / 2]);
+      tmpDenom = AUP_PE_MAX(
+          tmpDenom,
+          stHdl->xCorr[xcorrAccIdx][(stHdl->maxPeriod + idx + 2) / 2]);
+      tmpDenom = AUP_PE_MAX(
+          tmpDenom,
+          stHdl->xCorr[xcorrAccIdx][(stHdl->maxPeriod + idx - 1) / 2]);
 
       if (stHdl->xCorr[xcorrAccIdx][idx] < (tmpDenom * 1.1f))
         stHdl->xCorr[xcorrAccIdx][idx] *= 0.8f;
@@ -1003,21 +1032,25 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
   slidWinSum = 1e-15f;
   for (sub = 0; sub < (stHdl->nFeat * 2); sub++) {
     slidWinSum += stHdl->frmWeight[sub];
-  }  
+  }
   for (sub = 0; sub < (stHdl->nFeat * 2); sub++) {
-    stHdl->frmWeightNorm[sub] = stHdl->frmWeight[sub] * ((stHdl->nFeat * 2) / slidWinSum);
+    stHdl->frmWeightNorm[sub] =
+        stHdl->frmWeight[sub] * ((stHdl->nFeat * 2) / slidWinSum);
   }
 
-  // copy xCorr to xCorrTmp, so that later-on we can modify the content in xCorrTmp without
-  // impacting next hop's processing
+  // copy xCorr to xCorrTmp, so that later-on we can modify the content in
+  // xCorrTmp without impacting next hop's processing
   for (idx = 0; idx < (stHdl->nFeat * 2); idx++) {
-    memcpy(stHdl->xCorrTmp[idx], stHdl->xCorr[idx], sizeof(float) * (stHdl->maxPeriod + 1));
+    memcpy(stHdl->xCorrTmp[idx], stHdl->xCorr[idx],
+           sizeof(float) * (stHdl->maxPeriod + 1));
   }
 
   // shift pitchPrev buffer to left space for this new frame's result
-  for (sub = 0; sub < (stHdl->nFeat * 2 - 2); sub+=2) {
-    memcpy(stHdl->pitchPrev[sub], stHdl->pitchPrev[sub + 2], sizeof(int)* stHdl->maxPeriod);
-    memcpy(stHdl->pitchPrev[sub + 1], stHdl->pitchPrev[sub + 3], sizeof(int)* stHdl->maxPeriod);
+  for (sub = 0; sub < (stHdl->nFeat * 2 - 2); sub += 2) {
+    memcpy(stHdl->pitchPrev[sub], stHdl->pitchPrev[sub + 2],
+           sizeof(int) * stHdl->maxPeriod);
+    memcpy(stHdl->pitchPrev[sub + 1], stHdl->pitchPrev[sub + 3],
+           sizeof(int) * stHdl->maxPeriod);
   }
   for (sub = (stHdl->nFeat * 2 - 2); sub < (stHdl->nFeat * 2); sub++) {
     XCIdx = sub + (stHdl->xCorrOffsetIdx * 2);
@@ -1031,15 +1064,17 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
 
       SIDXT = AUP_PE_MIN(0, 4 - idx);
       for (jdx = SIDXT; jdx <= 4 && (idx + jdx) < stHdl->difPeriod; jdx++) {
-        tmpDenom = stHdl->pitchMaxPathReg[0][idx + jdx] - (AUP_PE_PITCHMAXPATH_W * abs(jdx) * abs(jdx));
+        tmpDenom = stHdl->pitchMaxPathReg[0][idx + jdx] -
+                   (AUP_PE_PITCHMAXPATH_W * abs(jdx) * abs(jdx));
         if (tmpDenom > maxTrackReg) {
           maxTrackReg = tmpDenom;
           stHdl->pitchPrev[sub][idx] = idx + jdx;
         }
       }
-     
+
       // store the max search result into pitch_max_path[1][...]
-      stHdl->pitchMaxPathReg[1][idx] = maxTrackReg + stHdl->frmWeightNorm[sub] * stHdl->xCorrTmp[XCIdx][idx];
+      stHdl->pitchMaxPathReg[1][idx] =
+          maxTrackReg + stHdl->frmWeightNorm[sub] * stHdl->xCorrTmp[XCIdx][idx];
     }
 
     maxPathReg = -1e15f;
@@ -1053,7 +1088,8 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
     stHdl->pitchMaxPathAll = maxPathReg;
     stHdl->bestPeriodEst = tmpInt;
 
-    memcpy(&(stHdl->pitchMaxPathReg[0][0]), &(stHdl->pitchMaxPathReg[1][0]), sizeof(float) * stHdl->maxPeriod);
+    memcpy(&(stHdl->pitchMaxPathReg[0][0]), &(stHdl->pitchMaxPathReg[1][0]),
+           sizeof(float) * stHdl->maxPeriod);
     for (idx = 0; idx < stHdl->difPeriod; idx++) {
       stHdl->pitchMaxPathReg[0][idx] -= maxPathReg;
     }
@@ -1072,9 +1108,9 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
     frmCorr += stHdl->frmWeightNorm[sub] * stHdl->xCorrTmp[XCIdx][tmpInt];
     tmpInt = stHdl->pitchPrev[sub][tmpInt];
   }
-  frmCorr = AUP_PE_MAX(0, frmCorr /(float)(stHdl->nFeat * 2));
+  frmCorr = AUP_PE_MAX(0, frmCorr / (float)(stHdl->nFeat * 2));
   stHdl->voiced = (frmCorr >= stHdl->dynamCfg.voicedThr) ? 1 : 0;
-  
+
   for (sub = 0; sub < (stHdl->nFeat * 2); sub++) {
     w = stHdl->frmWeightNorm[sub];
     sw += w;
@@ -1093,19 +1129,18 @@ int AUP_PE_proc(void* stPtr, const PE_InputData* pIn, PE_OutputData* pOut) {
     bestA = (sw * sxy - sx * sy) / tmpDenom;
 
   if (stHdl->voiced == 1) {
-    tmpDenom = (sy/sw) / (4 * 2 * stHdl->nFeat);
+    tmpDenom = (sy / sw) / (4 * 2 * stHdl->nFeat);
     bestA = AUP_PE_MIN(tmpDenom, AUP_PE_MAX(-tmpDenom, bestA));
-  }
-  else {  // if there is no voice inside this frame
+  } else {  // if there is no voice inside this frame
     bestA = 0;
   }
   bestB = (sy - bestA * sx) / sw;
   estimatedPeriod = bestB + 5.5f * bestA;
 
   if (stHdl->voiced == 1) {
-    stHdl->pitchEstResult = ((float)(stHdl->stCfg.procFs)) / AUP_PE_MAX(1.0f, estimatedPeriod);
-  }
-  else {
+    stHdl->pitchEstResult =
+        ((float)(stHdl->stCfg.procFs)) / AUP_PE_MAX(1.0f, estimatedPeriod);
+  } else {
     stHdl->pitchEstResult = 0;
   }
 

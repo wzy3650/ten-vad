@@ -20,7 +20,8 @@ static int AUP_Biquad_checkStatCfg(const Biquad_StaticCfg* pCfg) {
     return -1;
   }
 
-  if (pCfg->maxNSample == 0 || pCfg->maxNSample > AGORA_UAP_BIQUAD_MAX_INPUT_LEN) {
+  if (pCfg->maxNSample == 0 ||
+      pCfg->maxNSample > AGORA_UAP_BIQUAD_MAX_INPUT_LEN) {
     return -1;
   }
   if (pCfg->nsect > AGORA_UAP_BIQUAD_MAX_SECTION) {
@@ -186,7 +187,8 @@ int AUP_Biquad_memAllocate(void* stPtr, const Biquad_StaticCfg* pCfg) {
   inputTempBufMemSize = AGORA_UAP_BIQUAD_ALIGN8(sizeof(float) * maxNSample);
   totalMemSize += inputTempBufMemSize;
 
-  sectOutputBufMemSize_EACH = AGORA_UAP_BIQUAD_ALIGN8(sizeof(float) * maxNSample);
+  sectOutputBufMemSize_EACH =
+      AGORA_UAP_BIQUAD_ALIGN8(sizeof(float) * maxNSample);
   totalMemSize += sectOutputBufMemSize_EACH * nsect;
 
   // allocate dynamic memory
@@ -266,7 +268,7 @@ int AUP_Biquad_getAlgDelay(const void* stPtr, int* delayInSamples) {
 }
 
 int AUP_Biquad_proc(void* stPtr, const Biquad_InputData* pIn,
-                          Biquad_OutputData* pOut) {
+                    Biquad_OutputData* pOut) {
   Biquad_St* stHdl = NULL;
   int isFloatIO = 0;
   int inputNSamples, nSect;
@@ -304,7 +306,8 @@ int AUP_Biquad_proc(void* stPtr, const Biquad_InputData* pIn,
       stHdl->inputTempBuf[smplIdx] = (float)pShortTemp[smplIdx];
     }
   } else {
-    memcpy(stHdl->inputTempBuf, (const float*)pIn->samplesPtr, sizeof(float) * inputNSamples);
+    memcpy(stHdl->inputTempBuf, (const float*)pIn->samplesPtr,
+           sizeof(float) * inputNSamples);
   }
 
   for (sectIdx = 0; sectIdx < nSect; sectIdx++) {
@@ -316,13 +319,14 @@ int AUP_Biquad_proc(void* stPtr, const Biquad_InputData* pIn,
     tgt = stHdl->sectOutputBuf[sectIdx];
 
     for (smplIdx = 0; smplIdx < inputNSamples; smplIdx++) {
-      tmp1 = src[smplIdx] - stHdl->ACoeff[sectIdx][1] * stHdl->sectW[sectIdx][0] -
+      tmp1 = src[smplIdx] -
+             stHdl->ACoeff[sectIdx][1] * stHdl->sectW[sectIdx][0] -
              stHdl->ACoeff[sectIdx][2] * stHdl->sectW[sectIdx][1];
 
-      tgt[smplIdx] =
-          stHdl->GCoeff[sectIdx] *
-          (stHdl->BCoeff[sectIdx][0] * tmp1 + stHdl->BCoeff[sectIdx][1] * stHdl->sectW[sectIdx][0] +
-           stHdl->BCoeff[sectIdx][2] * stHdl->sectW[sectIdx][1]);
+      tgt[smplIdx] = stHdl->GCoeff[sectIdx] *
+                     (stHdl->BCoeff[sectIdx][0] * tmp1 +
+                      stHdl->BCoeff[sectIdx][1] * stHdl->sectW[sectIdx][0] +
+                      stHdl->BCoeff[sectIdx][2] * stHdl->sectW[sectIdx][1]);
 
       stHdl->sectW[sectIdx][1] = stHdl->sectW[sectIdx][0];
       stHdl->sectW[sectIdx][0] = tmp1;
@@ -336,7 +340,8 @@ int AUP_Biquad_proc(void* stPtr, const Biquad_InputData* pIn,
           (short)_BIQUAD_FLOAT2SHORT(stHdl->sectOutputBuf[nSect - 1][smplIdx]);
     }
   } else {
-    memcpy(pOut->outputBuff, stHdl->sectOutputBuf[nSect - 1], sizeof(float) * inputNSamples);
+    memcpy(pOut->outputBuff, stHdl->sectOutputBuf[nSect - 1],
+           sizeof(float) * inputNSamples);
   }
 
   return 0;

@@ -7,8 +7,8 @@
 
 #define AUP_STFT_MAX_FFTSZ (4096)
 
-// Configuration Parameters, which impacts dynamic memory occupation, can only be set during
-// allocation
+// Configuration Parameters, which impacts dynamic memory occupation, can only
+// be set during allocation
 typedef struct Analyzer_StaticCfg_ {
   int win_len;
   int hop_size;
@@ -16,17 +16,17 @@ typedef struct Analyzer_StaticCfg_ {
   const float* ana_win_coeff;
 } Analyzer_StaticCfg;
 
-// Spectrum are assumed to be generated with time-domain samples in [-32768, 32767]
-// WITH LEC blowup protection
-// Note: the input timeSignal has to be in 16KHz sampling-rate
+// Spectrum are assumed to be generated with time-domain samples in [-32768,
+// 32767] WITH LEC blowup protection Note: the input timeSignal has to be in
+// 16KHz sampling-rate
 typedef struct Analyzer_InputData_ {
   float* input;
   int iLength;
 } Analyzer_InputData;
 
 typedef struct Analyzer_OutputData_ {
-  float* output;   // externally provided buffe
-  int oLength;  // externally provided buffer length
+  float* output;  // externally provided buffe
+  int oLength;    // externally provided buffer length
 } Analyzer_OutputData;
 
 #ifdef __cplusplus
@@ -99,7 +99,6 @@ int AUP_Analyzer_memAllocate(void* stPtr, const Analyzer_StaticCfg* pCfg);
  */
 int AUP_Analyzer_init(void* stPtr);
 
-
 /****************************************************************************
  * AUP_Analyzer_getStaticCfg(...)
  *
@@ -135,7 +134,7 @@ int AUP_Analyzer_getStaticCfg(const void* stPtr, Analyzer_StaticCfg* pCfg);
  *                        -1 - Error
  */
 int AUP_Analyzer_proc(void* stPtr, const Analyzer_InputData* pIn,
-  Analyzer_OutputData* pOut);
+                      Analyzer_OutputData* pOut);
 
 #ifdef __cplusplus
 }

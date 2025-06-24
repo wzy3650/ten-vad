@@ -12,8 +12,9 @@
 // ==========================================================================================
 
 static int AUP_Fscvrt_FilterSet(int resampleRate, int* nsect,
-  const float* B[_FSCVRT_MAXNSEC], const float* A[_FSCVRT_MAXNSEC],
-  const float** G) {
+                                const float* B[_FSCVRT_MAXNSEC],
+                                const float* A[_FSCVRT_MAXNSEC],
+                                const float** G) {
   int idx;
   if (resampleRate == 2) {
     *nsect = _FSCVRT_1over2_LOWPASS_NSEC;
@@ -22,39 +23,36 @@ static int AUP_Fscvrt_FilterSet(int resampleRate, int* nsect,
       A[idx] = &(_FSCVRT_1over2_LOWPASS_A[idx][0]);
     }
     *G = _FSCVRT_1over2_LOWPASS_G;
-  }
-  else if (resampleRate == 3) {
+  } else if (resampleRate == 3) {
     *nsect = _FSCVRT_1over3_LOWPASS_NSEC;
     for (idx = 0; idx < (*nsect); idx++) {
       B[idx] = &(_FSCVRT_1over3_LOWPASS_B[idx][0]);
       A[idx] = &(_FSCVRT_1over3_LOWPASS_A[idx][0]);
     }
     *G = _FSCVRT_1over3_LOWPASS_G;
-  }
-  else if (resampleRate == 4) {
+  } else if (resampleRate == 4) {
     *nsect = _FSCVRT_1over4_LOWPASS_NSEC;
     for (idx = 0; idx < (*nsect); idx++) {
       B[idx] = &(_FSCVRT_1over4_LOWPASS_B[idx][0]);
       A[idx] = &(_FSCVRT_1over4_LOWPASS_A[idx][0]);
     }
     *G = _FSCVRT_1over4_LOWPASS_G;
-  }
-  else if (resampleRate == 6) {
+  } else if (resampleRate == 6) {
     *nsect = _FSCVRT_1over6_LOWPASS_NSEC;
     for (idx = 0; idx < (*nsect); idx++) {
       B[idx] = &(_FSCVRT_1over6_LOWPASS_B[idx][0]);
       A[idx] = &(_FSCVRT_1over6_LOWPASS_A[idx][0]);
     }
     *G = _FSCVRT_1over6_LOWPASS_G;
-  }
-  else {  // unknown resample rate
+  } else {  // unknown resample rate
     return -1;
   }
 
   return 0;
 }
 
-static int AUP_Fscvrt_dynamMemPrepare(FscvrtSt* stHdl, void* memPtrExt, size_t memSize) {
+static int AUP_Fscvrt_dynamMemPrepare(FscvrtSt* stHdl, void* memPtrExt,
+                                      size_t memSize) {
   char* memPtr = NULL;
   int biquadInBufMemSize = 0;
   int biquadOutBufMemSize = 0;
@@ -72,7 +70,8 @@ static int AUP_Fscvrt_dynamMemPrepare(FscvrtSt* stHdl, void* memPtrExt, size_t m
 
   totalMemSize = _FSCVRT_MAX(totalMemSize, 80);
 
-  // if no external memory provided, we are only profiling the memory requirement
+  // if no external memory provided, we are only profiling the memory
+  // requirement
   if (memPtrExt == NULL) {
     return (totalMemSize);
   }
@@ -107,7 +106,7 @@ static int AUP_Fscvrt_checkStatCfg(FscvrtStaticCfg* pCfg) {
     return -1;
   }
 
-  if (pCfg->inputFs != 16000 && pCfg->inputFs != 24000 && 
+  if (pCfg->inputFs != 16000 && pCfg->inputFs != 24000 &&
       pCfg->inputFs != 32000 && pCfg->inputFs != 48000) {
     return -1;
   }
@@ -147,47 +146,43 @@ static int AUP_Fscvrt_publishStaticCfg(FscvrtSt* stHdl) {
         stHdl->mode = 1;
         stHdl->upSmplRate = tmpRatio;
         stHdl->downSmplRate = 1;
-      }
-      else {
+      } else {
         stHdl->mode = 3;
         stHdl->upSmplRate = _FSCVRT_COMMON_FS / stHdl->stCfg.inputFs;
         stHdl->downSmplRate = _FSCVRT_COMMON_FS / stHdl->stCfg.outputFs;
       }
-    }
-    else {  // stHdl->stCfg.outputFs < stHdl->stCfg.inputFs
+    } else {  // stHdl->stCfg.outputFs < stHdl->stCfg.inputFs
       tmpRatio = (stHdl->stCfg.inputFs / stHdl->stCfg.outputFs);
       if (stHdl->stCfg.inputFs == tmpRatio * stHdl->stCfg.outputFs) {
         stHdl->mode = 2;
         stHdl->upSmplRate = 1;
         stHdl->downSmplRate = tmpRatio;
-      }
-      else {
+      } else {
         stHdl->mode = 3;
         stHdl->upSmplRate = _FSCVRT_COMMON_FS / stHdl->stCfg.inputFs;
         stHdl->downSmplRate = _FSCVRT_COMMON_FS / stHdl->stCfg.outputFs;
       }
     }
   }
-  
+
   if (stHdl->mode == 0) {
     stHdl->biquadInBufLen = 0;
     stHdl->biquadOutBufLen = 0;
-  }
-  else {
+  } else {
     stHdl->biquadInBufLen = stHdl->stCfg.stepSz * stHdl->upSmplRate;
-    stHdl->biquadOutBufLen = 2*(stHdl->stCfg.stepSz * stHdl->upSmplRate);
+    stHdl->biquadOutBufLen = 2 * (stHdl->stCfg.stepSz * stHdl->upSmplRate);
   }
-  
+
   maxResmplRate = _FSCVRT_MAX(stHdl->upSmplRate, stHdl->downSmplRate);
 
   stHdl->nSec = 0;
   memset(stHdl->biquadB, 0, sizeof(stHdl->biquadB));
   memset(stHdl->biquadA, 0, sizeof(stHdl->biquadA));
   stHdl->biquadG = NULL;  // gain for each section
-  
+
   if (stHdl->mode != 0) {
-    ret = AUP_Fscvrt_FilterSet(maxResmplRate, &(stHdl->nSec),
-      stHdl->biquadB, stHdl->biquadA, &(stHdl->biquadG));
+    ret = AUP_Fscvrt_FilterSet(maxResmplRate, &(stHdl->nSec), stHdl->biquadB,
+                               stHdl->biquadA, &(stHdl->biquadG));
     if (ret < 0) {
       return -1;
     }
@@ -199,7 +194,7 @@ static int AUP_Fscvrt_publishStaticCfg(FscvrtSt* stHdl) {
 static int AUP_Fscvrt_resetVariables(FscvrtSt* stHdl) {
   stHdl->biquadInBufCnt = 0;
   stHdl->biquadOutBufCnt = 0;
-  
+
   if (stHdl->dynamMemPtr != NULL && stHdl->dynamMemSize > 0) {
     memset(stHdl->dynamMemPtr, 0, stHdl->dynamMemSize);
   }
@@ -229,8 +224,8 @@ int AUP_Fscvrt_create(void** stPtr) {
 
   tmpPtr->stCfg.inputFs = 24000;
   tmpPtr->stCfg.outputFs = 32000;
-  tmpPtr->stCfg.stepSz = 240;  // 10ms processing step
-  tmpPtr->stCfg.inputType = 0;  // short in
+  tmpPtr->stCfg.stepSz = 240;    // 10ms processing step
+  tmpPtr->stCfg.inputType = 0;   // short in
   tmpPtr->stCfg.outputType = 0;  // short out
 
   if (AUP_Biquad_create(&(tmpPtr->biquadSt)) < 0) {
@@ -266,7 +261,7 @@ int AUP_Fscvrt_destroy(void** stPtr) {
 
 int AUP_Fscvrt_memAllocate(void* stPtr, const FscvrtStaticCfg* pCfg) {
   FscvrtSt* stHdl = NULL;
-  FscvrtStaticCfg tmpStatCfg = { 0 };
+  FscvrtStaticCfg tmpStatCfg = {0};
   Biquad_StaticCfg bqStatCfg;
   int idx, ret;
   int totalMemSize = 0;
@@ -307,7 +302,8 @@ int AUP_Fscvrt_memAllocate(void* stPtr, const FscvrtStaticCfg* pCfg) {
   memset(stHdl->dynamMemPtr, 0, stHdl->dynamMemSize);
 
   // setup the pointers/variable
-  if (AUP_Fscvrt_dynamMemPrepare(stHdl, stHdl->dynamMemPtr, stHdl->dynamMemSize) < 0) {
+  if (AUP_Fscvrt_dynamMemPrepare(stHdl, stHdl->dynamMemPtr,
+                                 stHdl->dynamMemSize) < 0) {
     return -1;
   }
 
@@ -388,24 +384,22 @@ int AUP_Fscvrt_getInfor(const void* stPtr, FscvrtGetData* buff) {
 
   if (stHdl->mode == 0) {
     buff->delayInInputFs = 0;
-  }
-  else if (stHdl->mode == 1) {
-    buff->delayInInputFs = (int)roundf(delayBiquad / (float)(stHdl->upSmplRate));
-  }
-  else if (stHdl->mode == 2) {  // direct downsampling
+  } else if (stHdl->mode == 1) {
+    buff->delayInInputFs =
+        (int)roundf(delayBiquad / (float)(stHdl->upSmplRate));
+  } else if (stHdl->mode == 2) {  // direct downsampling
     buff->delayInInputFs = delayBiquad;
-  }
-  else {  // stHdl->mode == 3
-    buff->delayInInputFs = (int)roundf(delayBiquad / (float)(stHdl->upSmplRate));
+  } else {  // stHdl->mode == 3
+    buff->delayInInputFs =
+        (int)roundf(delayBiquad / (float)(stHdl->upSmplRate));
   }
   tmp = stHdl->stCfg.stepSz * stHdl->upSmplRate / stHdl->downSmplRate;
   if (tmp * stHdl->downSmplRate == stHdl->stCfg.stepSz * stHdl->upSmplRate) {
     buff->maxOutputStepSz = tmp;
-  }
-  else {
+  } else {
     buff->maxOutputStepSz = tmp + 1;
   }
-  
+
   return 0;
 }
 
@@ -442,25 +436,23 @@ int AUP_Fscvrt_proc(void* stPtr, const FscvrtInData* pIn, FscvrtOutData* pOut) {
     if (pIn->inDataSeq == pOut->outDataSeq) {
       if (pCfg->outputType == pCfg->inputType)
         return 0;  // we don't need to do anything
-      return -1; 
-      // if input buffer and the output buffer are the same, but required different 
-      // data type: error, we currently do not support such usecase
+      return -1;
+      // if input buffer and the output buffer are the same, but required
+      // different data type: error, we currently do not support such usecase
     }
 
     if (pCfg->inputType == 0 && pCfg->outputType == 0) {
       memcpy(pOut->outDataSeq, pIn->inDataSeq, sizeof(short) * pCfg->stepSz);
-    }
-    else if (pCfg->inputType == 1 && pCfg->outputType == 1) {
+    } else if (pCfg->inputType == 1 && pCfg->outputType == 1) {
       memcpy(pOut->outDataSeq, pIn->inDataSeq, sizeof(float) * pCfg->stepSz);
-    }
-    else if (pCfg->inputType == 0 && pCfg->outputType == 1) {
+    } else if (pCfg->inputType == 0 && pCfg->outputType == 1) {
       for (idx = 0; idx < pCfg->stepSz; idx++) {
         ((float*)pOut->outDataSeq)[idx] = ((short*)pIn->inDataSeq)[idx];
       }
-    }
-    else {  // if (pCfg->inputType == 1 && pCfg->outputType == 0)
+    } else {  // if (pCfg->inputType == 1 && pCfg->outputType == 0)
       for (idx = 0; idx < pCfg->stepSz; idx++) {
-        ((short*)pOut->outDataSeq)[idx] = (short)_FSCVRT_FLOAT2SHORT(((float*)pIn->inDataSeq)[idx]);
+        ((short*)pOut->outDataSeq)[idx] =
+            (short)_FSCVRT_FLOAT2SHORT(((float*)pIn->inDataSeq)[idx]);
       }
     }
 
@@ -471,12 +463,13 @@ int AUP_Fscvrt_proc(void* stPtr, const FscvrtInData* pIn, FscvrtOutData* pOut) {
   memset(stHdl->biquadInBuf, 0, sizeof(float) * stHdl->biquadInBufLen);
   if (pCfg->inputType == 0) {
     for (idx = 0; idx < pCfg->stepSz; idx++) {
-      stHdl->biquadInBuf[idx * (stHdl->upSmplRate)] = ((float)shortSrcPtr[idx]) * stHdl->upSmplRate;
+      stHdl->biquadInBuf[idx * (stHdl->upSmplRate)] =
+          ((float)shortSrcPtr[idx]) * stHdl->upSmplRate;
     }
-  }
-  else {
+  } else {
     for (idx = 0; idx < pCfg->stepSz; idx++) {
-      stHdl->biquadInBuf[idx * (stHdl->upSmplRate)] = floatSrcPtr[idx] * stHdl->upSmplRate;
+      stHdl->biquadInBuf[idx * (stHdl->upSmplRate)] =
+          floatSrcPtr[idx] * stHdl->upSmplRate;
     }
   }
 
@@ -487,14 +480,15 @@ int AUP_Fscvrt_proc(void* stPtr, const FscvrtInData* pIn, FscvrtOutData* pOut) {
   bqdInData.sampleType = 1;
   bqdInData.nsamples = (size_t)(pCfg->stepSz * stHdl->upSmplRate);
   bqdOutData.outputBuff = (void*)&(stHdl->biquadOutBuf[stHdl->biquadOutBufCnt]);
-  if (stHdl->biquadOutBufCnt + (pCfg->stepSz * stHdl->upSmplRate) > stHdl->biquadOutBufLen) {
+  if (stHdl->biquadOutBufCnt + (pCfg->stepSz * stHdl->upSmplRate) >
+      stHdl->biquadOutBufLen) {
     return -1;
   }
   if (AUP_Biquad_proc(stHdl->biquadSt, &bqdInData, &bqdOutData) < 0) {
     return -1;
   }
   stHdl->biquadOutBufCnt += (pCfg->stepSz * stHdl->upSmplRate);
-  
+
   // checking the output buffer .........
   nOutSamples = stHdl->biquadOutBufCnt / stHdl->downSmplRate;
   if (pIn->outDataSeqLen < nOutSamples) {
@@ -509,12 +503,13 @@ int AUP_Fscvrt_proc(void* stPtr, const FscvrtInData* pIn, FscvrtOutData* pOut) {
   floatTgtPtr = (float*)pOut->outDataSeq;
   jumpRate = stHdl->downSmplRate;
   if (pCfg->outputType == 0) {  // -> shortTgtPtr
-    for (idx = (jumpRate - 1), tgtIdx = 0; idx < stHdl->biquadOutBufCnt; idx += jumpRate, tgtIdx++) {
+    for (idx = (jumpRate - 1), tgtIdx = 0; idx < stHdl->biquadOutBufCnt;
+         idx += jumpRate, tgtIdx++) {
       shortTgtPtr[tgtIdx] = _FSCVRT_FLOAT2SHORT(stHdl->biquadOutBuf[idx]);
     }
-  }
-  else {  // -> floatTgtPtr
-    for (idx = (jumpRate - 1), tgtIdx = 0; idx < stHdl->biquadOutBufCnt; idx += jumpRate, tgtIdx++) {
+  } else {  // -> floatTgtPtr
+    for (idx = (jumpRate - 1), tgtIdx = 0; idx < stHdl->biquadOutBufCnt;
+         idx += jumpRate, tgtIdx++) {
       floatTgtPtr[tgtIdx] = stHdl->biquadOutBuf[idx];
     }
   }
@@ -527,12 +522,11 @@ int AUP_Fscvrt_proc(void* stPtr, const FscvrtInData* pIn, FscvrtOutData* pOut) {
   samplesLeft = stHdl->biquadOutBufCnt - samplesTaken;
   if (samplesLeft == 0) {
     stHdl->biquadOutBufCnt = 0;
-  }
-  else if (samplesLeft > 0) {
+  } else if (samplesLeft > 0) {
     stHdl->biquadOutBufCnt = samplesLeft;
-    memmove(stHdl->biquadOutBuf, &(stHdl->biquadOutBuf[samplesTaken]), sizeof(float)* samplesLeft);
-  }
-  else {  // samplesLeft < 0
+    memmove(stHdl->biquadOutBuf, &(stHdl->biquadOutBuf[samplesTaken]),
+            sizeof(float) * samplesLeft);
+  } else {  // samplesLeft < 0
     stHdl->biquadOutBufCnt = 0;
     return -1;
   }

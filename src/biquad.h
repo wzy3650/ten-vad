@@ -14,15 +14,17 @@
   ((x) < -32767.5f ? -32768 : ((x) > 32766.5f ? 32767 : (short)floor(.5 + (x))))
 
 #define _BIQUAD_DC_REMOVAL_NSECT (2)
-const float _BIQUAD_DC_REMOVAL_B[_BIQUAD_DC_REMOVAL_NSECT][3] = {{1.0f, -2.0f, 1.0f},
-                                                               {1.0f, -1.0f, 0.0f}};
-const float _BIQUAD_DC_REMOVAL_A[_BIQUAD_DC_REMOVAL_NSECT][3] = {{1.0f, -1.93944294f, 0.94281253f},
-                                                               {1.0f, -0.94276431f, 0.0f}};
-// const float _BIQUAD_DC_REMOVAL_G[_BIQUAD_DC_REMOVAL_NSECT] = {0.97056387f, 0.97138215f};
-const float _BIQUAD_DC_REMOVAL_G[_BIQUAD_DC_REMOVAL_NSECT] = {0.97056387f, 0.8655014957f};
+const float _BIQUAD_DC_REMOVAL_B[_BIQUAD_DC_REMOVAL_NSECT][3] = {
+    {1.0f, -2.0f, 1.0f}, {1.0f, -1.0f, 0.0f}};
+const float _BIQUAD_DC_REMOVAL_A[_BIQUAD_DC_REMOVAL_NSECT][3] = {
+    {1.0f, -1.93944294f, 0.94281253f}, {1.0f, -0.94276431f, 0.0f}};
+// const float _BIQUAD_DC_REMOVAL_G[_BIQUAD_DC_REMOVAL_NSECT] = {0.97056387f,
+// 0.97138215f};
+const float _BIQUAD_DC_REMOVAL_G[_BIQUAD_DC_REMOVAL_NSECT] = {0.97056387f,
+                                                              0.8655014957f};
 
-// Configuration Parameters, which impacts dynamic memory occupation, can only be set during
-// allocation
+// Configuration Parameters, which impacts dynamic memory occupation, can only
+// be set during allocation
 typedef struct Biquad_StaticCfg_ {
   size_t maxNSample;  // max. number of samples each time can be fed in
   // (0, AGORA_UAP_BIQUAD_MAX_INPUT_LEN]
@@ -38,7 +40,8 @@ typedef struct Biquad_StaticCfg_ {
 } Biquad_StaticCfg;
 
 typedef struct Biquad_InputData_ {
-  const void* samplesPtr;  // externally provided buffer containing input time samples
+  const void*
+      samplesPtr;  // externally provided buffer containing input time samples
   // either in short or float type
   short sampleType;  // = 0: samplesPtr = short*; o.w. samplesPtr = float*
   size_t nsamples;   // number of samples fed in this time
@@ -46,8 +49,9 @@ typedef struct Biquad_InputData_ {
 
 typedef struct Biquad_OutputData_ {
   void* outputBuff;  // externally provided output buffer,
-                     // assumed to be of enough size  nsamples * sizeof(short)/sizeof(short)
-                     // output data type is the same as input
+                     // assumed to be of enough size  nsamples *
+                     // sizeof(short)/sizeof(short) output data type is the same
+                     // as input
 } Biquad_OutputData;
 
 #ifdef __cplusplus
@@ -172,7 +176,7 @@ int AUP_Biquad_getAlgDelay(const void* stPtr, int* delayInSamples);
  *                        -1 - Error
  */
 int AUP_Biquad_proc(void* stPtr, const Biquad_InputData* pIn,
-                          Biquad_OutputData* pOut);
+                    Biquad_OutputData* pOut);
 
 #ifdef __cplusplus
 }

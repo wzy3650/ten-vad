@@ -7,32 +7,32 @@
 #include <stdio.h>
 
 typedef struct FscvrtStaticCfg_ {
-  int inputFs;  // input stream sampling freq.
-  int outputFs;  // output stream sampling freq.
-  int stepSz;   // number of input samples per each proc.
-  int inputType;  // input data type, 0: short, 1: float
+  int inputFs;     // input stream sampling freq.
+  int outputFs;    // output stream sampling freq.
+  int stepSz;      // number of input samples per each proc.
+  int inputType;   // input data type, 0: short, 1: float
   int outputType;  // output data type, 0: short, 1: float
 } FscvrtStaticCfg;
 
 typedef struct FscvrtInData_ {
-  const void* inDataSeq;   // [stepSz], externally provided buffer
+  const void* inDataSeq;  // [stepSz], externally provided buffer
   int outDataSeqLen;
   // the length of externally provided buffer outDataSeq in OutData
-}FscvrtInData;
+} FscvrtInData;
 
 typedef struct FscvrtOutData_ {
   int nOutData;  // number of samples in outDataSeq
   // this value may vary by +-1 from frame-to-frame
   // and the user needs to check if nOutData <= outDataSeqLen
   // o.w. the buffer outDataSeq is not long enough
-  int outDataType;  // output data type, 0: short, 1: float
+  int outDataType;   // output data type, 0: short, 1: float
   void* outDataSeq;  // [outDataSeqLen], externally provided buffer
-}FscvrtOutData;
+} FscvrtOutData;
 
 typedef struct FscvrtGetData_ {
-  int maxOutputStepSz;  // max. number of output samples per each proc. 
-  int delayInInputFs;  // algorithm delay in terms of samples @ input fs
-}FscvrtGetData;
+  int maxOutputStepSz;  // max. number of output samples per each proc.
+  int delayInInputFs;   // algorithm delay in terms of samples @ input fs
+} FscvrtGetData;
 
 #ifdef __cplusplus
 extern "C" {

@@ -20,7 +20,8 @@
 
 AUP_MODULE_AIVAD::AUP_MODULE_AIVAD(char* onnx_path) {
   ort_api = OrtGetApiBase()->GetApi(ORT_API_VERSION);
-  OrtStatus* status = ort_api->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "TEN-VAD", &ort_env);
+  OrtStatus* status =
+      ort_api->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "TEN-VAD", &ort_env);
   if (status) {
     printf("Failed to create env: %s\n", ort_api->GetErrorMessage(status));
     ort_api->ReleaseStatus(status);
@@ -32,10 +33,12 @@ AUP_MODULE_AIVAD::AUP_MODULE_AIVAD(char* onnx_path) {
   OrtSessionOptions* session_options;
   ort_api->CreateSessionOptions(&session_options);
   ort_api->SetIntraOpNumThreads(session_options, 1);
-  status = ort_api->CreateSession(ort_env, onnx_path, session_options, &ort_session);
+  status =
+      ort_api->CreateSession(ort_env, onnx_path, session_options, &ort_session);
   ort_api->ReleaseSessionOptions(session_options);
   if (status) {
-    printf("Failed to create ort_session: %s\n", ort_api->GetErrorMessage(status));
+    printf("Failed to create ort_session: %s\n",
+           ort_api->GetErrorMessage(status));
     ort_api->ReleaseStatus(status);
     ort_api->ReleaseEnv(ort_env);
     ort_env = NULL;
@@ -66,36 +69,37 @@ AUP_MODULE_AIVAD::AUP_MODULE_AIVAD(char* onnx_path) {
   }
 
   OrtMemoryInfo* memory_info;
-  status = ort_api->CreateCpuMemoryInfo(OrtDeviceAllocator, OrtMemTypeDefault, &memory_info);
+  status = ort_api->CreateCpuMemoryInfo(OrtDeviceAllocator, OrtMemTypeDefault,
+                                        &memory_info);
   if (status != NULL) {
-      printf("Failed to create memory info: %s\n", ort_api->GetErrorMessage(status));
+    printf("Failed to create memory info: %s\n",
+           ort_api->GetErrorMessage(status));
+    ort_api->ReleaseStatus(status);
+    ort_api->ReleaseSession(ort_session);
+    ort_api->ReleaseEnv(ort_env);
+    ort_session = NULL;
+    ort_env = NULL;
+    return;
+  }
+  int64_t input_shapes0[] = {1, AUP_AED_CONTEXT_WINDOW_LEN, AUP_AED_FEA_LEN};
+  int64_t input_shapes1234[] = {1, AUP_AED_MODEL_HIDDEN_DIM};
+  for (int i = 0; i < num_inputs; i++) {
+    status = ort_api->CreateTensorWithDataAsOrtValue(
+        memory_info, i == 0 ? input_data_buf_0 : input_data_buf_1234[i - 1],
+        i == 0 ? sizeof(input_data_buf_0) : sizeof(input_data_buf_1234[i - 1]),
+        i == 0 ? input_shapes0 : input_shapes1234,
+        i == 0 ? sizeof(input_shapes0) / sizeof(input_shapes0[0])
+               : sizeof(input_shapes1234) / sizeof(input_shapes1234[0]),
+        ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &ort_input_tensors[i]);
+    if (status != NULL) {
+      printf("Failed to create input tensor %d: %s\n", i,
+             ort_api->GetErrorMessage(status));
       ort_api->ReleaseStatus(status);
       ort_api->ReleaseSession(ort_session);
       ort_api->ReleaseEnv(ort_env);
       ort_session = NULL;
       ort_env = NULL;
       return;
-  }
-  int64_t input_shapes0[] = {1, AUP_AED_CONTEXT_WINDOW_LEN, AUP_AED_FEA_LEN};
-  int64_t input_shapes1234[] = {1, AUP_AED_MODEL_HIDDEN_DIM};
-  for (int i = 0; i < num_inputs; i++) {
-    status = ort_api->CreateTensorWithDataAsOrtValue(
-      memory_info,
-      i == 0 ? input_data_buf_0 : input_data_buf_1234[i - 1],
-      i == 0 ? sizeof(input_data_buf_0) : sizeof(input_data_buf_1234[i - 1]),
-      i == 0 ? input_shapes0 : input_shapes1234,
-      i == 0 ? sizeof(input_shapes0) / sizeof(input_shapes0[0]) : sizeof(input_shapes1234) / sizeof(input_shapes1234[0]),
-      ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,
-      &ort_input_tensors[i]
-    );
-    if (status != NULL) {
-        printf("Failed to create input tensor %d: %s\n", i, ort_api->GetErrorMessage(status));
-        ort_api->ReleaseStatus(status);
-        ort_api->ReleaseSession(ort_session);
-        ort_api->ReleaseEnv(ort_env);
-        ort_session = NULL;
-        ort_env = NULL;
-        return;
     }
   }
 
@@ -103,20 +107,19 @@ AUP_MODULE_AIVAD::AUP_MODULE_AIVAD(char* onnx_path) {
   int64_t output_shapes1234[] = {1, AUP_AED_MODEL_HIDDEN_DIM};
   for (int i = 0; i < num_outputs; i++) {
     status = ort_api->CreateTensorAsOrtValue(
-      ort_allocator,
-      i == 0 ? output_shapes0 : output_shapes1234,
-      i == 0 ? sizeof(output_shapes0) / sizeof(output_shapes0[0]) : sizeof(output_shapes1234) / sizeof(output_shapes1234[0]),
-      ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,
-      &ort_output_tensors[i]
-    );
+        ort_allocator, i == 0 ? output_shapes0 : output_shapes1234,
+        i == 0 ? sizeof(output_shapes0) / sizeof(output_shapes0[0])
+               : sizeof(output_shapes1234) / sizeof(output_shapes1234[0]),
+        ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &ort_output_tensors[i]);
     if (status != NULL) {
-        printf("Failed to create output tensor %d: %s\n", i, ort_api->GetErrorMessage(status));
-        ort_api->ReleaseStatus(status);
-        ort_api->ReleaseSession(ort_session);
-        ort_api->ReleaseEnv(ort_env);
-        ort_session = NULL;
-        ort_env = NULL;
-        return;
+      printf("Failed to create output tensor %d: %s\n", i,
+             ort_api->GetErrorMessage(status));
+      ort_api->ReleaseStatus(status);
+      ort_api->ReleaseSession(ort_session);
+      ort_api->ReleaseEnv(ort_env);
+      ort_session = NULL;
+      ort_env = NULL;
+      return;
     }
   }
   inited = 1;
@@ -125,7 +128,7 @@ AUP_MODULE_AIVAD::AUP_MODULE_AIVAD(char* onnx_path) {
 AUP_MODULE_AIVAD::~AUP_MODULE_AIVAD() {
   for (int i = 0; i < AUP_AED_MODEL_IO_NUM; i++) {
     if (ort_output_tensors[i]) {
-        ort_api->ReleaseValue(ort_output_tensors[i]);
+      ort_api->ReleaseValue(ort_output_tensors[i]);
     }
   }
   if (ort_session) {
@@ -148,21 +151,15 @@ int AUP_MODULE_AIVAD::Process(float* input, float* output) {
     clear_hidden = 0;
   }
   OrtStatus* status = ort_api->Run(
-      ort_session,
-      NULL,
-      input_names,
-      ort_input_tensors,
-      AUP_AED_MODEL_IO_NUM,
-      output_names,
-      AUP_AED_MODEL_IO_NUM,
-      ort_output_tensors
-  );
+      ort_session, NULL, input_names, ort_input_tensors, AUP_AED_MODEL_IO_NUM,
+      output_names, AUP_AED_MODEL_IO_NUM, ort_output_tensors);
   float* output_data;
   ort_api->GetTensorMutableData(ort_output_tensors[0], (void**)&output_data);
   *output = output_data[0];
   for (int i = 1; i < AUP_AED_MODEL_IO_NUM; i++) {
     ort_api->GetTensorMutableData(ort_output_tensors[i], (void**)&output_data);
-    memcpy(input_data_buf_1234[i - 1], output_data, sizeof(input_data_buf_1234[i - 1]));
+    memcpy(input_data_buf_1234[i - 1], output_data,
+           sizeof(input_data_buf_1234[i - 1]));
   }
 
   return 0;
@@ -204,12 +201,12 @@ static int AUP_Aed_checkStatCfg(Aed_StaticCfg* pCfg) {
 
 static int AUP_Aed_publishStaticCfg(Aed_St* stHdl) {
   const Aed_StaticCfg* pStatCfg;
-  
+
   if (stHdl == NULL) {
     return -1;
   }
   pStatCfg = (const Aed_StaticCfg*)(&(stHdl->stCfg));
-  
+
   stHdl->extFftSz = 0;
   stHdl->extNBins = 0;
   stHdl->extWinSz = 0;
@@ -226,28 +223,33 @@ static int AUP_Aed_publishStaticCfg(Aed_St* stHdl) {
   stHdl->intNBins = (stHdl->intFftSz >> 1) + 1;
   stHdl->intAnalyWindowPtr = AUP_AED_STFTWindow_Hann768;
 
-  if (pStatCfg->frqInputAvailableFlag == 0 || stHdl->extHopSz != stHdl->intHopSz) {
+  if (pStatCfg->frqInputAvailableFlag == 0 ||
+      stHdl->extHopSz != stHdl->intHopSz) {
     // external STFT analysis framework is not supported at all
-    stHdl->intAnalyFlag = 2;  // internally redo analysis based on input time signal
-  }
-  else if (stHdl->extFftSz == stHdl->intFftSz) {
-    // external STFT analysis framework completely match with internal requirement
+    stHdl->intAnalyFlag =
+        2;  // internally redo analysis based on input time signal
+  } else if (stHdl->extFftSz == stHdl->intFftSz) {
+    // external STFT analysis framework completely match with internal
+    // requirement
     stHdl->intAnalyFlag = 0;  // directly use external spectrum
-  }
-  else {  // external spectrum need to be interpolated or extrapolated before AIVAD
-    stHdl->intAnalyFlag = 1;  // use external spectrum with interpolation / exterpolation
+  } else {  // external spectrum need to be interpolated or extrapolated before
+            // AIVAD
+    stHdl->intAnalyFlag =
+        1;  // use external spectrum with interpolation / exterpolation
   }
   stHdl->inputTimeFIFOLen = stHdl->extHopSz + stHdl->intHopSz;
-  
-  //for aiaed release2.0.0, pre-emphasis for input time-signal is needed, therefore, 
-  //we need redo analysis based on input time signal preprocessed by pre-emphasis.
-  stHdl->intAnalyFlag = 2;  // internally redo analysis based on input time signal
+
+  // for aiaed release2.0.0, pre-emphasis for input time-signal is needed,
+  // therefore, we need redo analysis based on input time signal preprocessed by
+  // pre-emphasis.
+  stHdl->intAnalyFlag =
+      2;  // internally redo analysis based on input time signal
 
   stHdl->feaSz = (size_t)AUP_AED_FEA_LEN;
   stHdl->melFbSz = (size_t)AUP_AED_MEL_FILTER_BANK_NUM;
   stHdl->algDelay = (size_t)AUP_AED_LOOKAHEAD_NFRM;
   stHdl->algCtxtSz = (size_t)AUP_AED_CONTEXT_WINDOW_LEN;
-  stHdl->frmRmsBufLen = AUP_AED_MAX(1, stHdl->algDelay); 
+  stHdl->frmRmsBufLen = AUP_AED_MAX(1, stHdl->algDelay);
 
   return 0;
 }
@@ -258,11 +260,11 @@ static int AUP_Aed_publishDynamCfg(Aed_St* stHdl) {
   if (stHdl == NULL) {
     return -1;
   }
-    
+
   pDynmCfg = (const Aed_DynamCfg*)(&(stHdl->dynamCfg));
   stHdl->aivadResetFrmNum = pDynmCfg->resetFrameNum;
   stHdl->voiceDecideThresh = pDynmCfg->extVoiceThr;
-  
+
   if (stHdl->pitchEstStPtr != NULL) {
     peDynmCfg.voicedThr = pDynmCfg->pitchEstVoicedThr;
     AUP_PE_setDynamCfg(stHdl->pitchEstStPtr, &peDynmCfg);
@@ -285,12 +287,13 @@ static int AUP_Aed_resetVariables(Aed_St* stHdl) {
   size_t i, j;
   size_t nBins = stHdl->intNBins;
   size_t melFbSz = stHdl->melFbSz;
-  
+
   stHdl->aedProcFrmCnt = 0;
   stHdl->inputTimeFIFOIdx = 0;
   stHdl->aivadResetCnt = 0;
   stHdl->timeSignalPre = 0.0f;
-  stHdl->aivadScore = -1.0f;  // as default value, labeling as aed is not working yet
+  stHdl->aivadScore =
+      -1.0f;  // as default value, labeling as aed is not working yet
   stHdl->aivadScorePre = -1.0f;
 
   stHdl->pitchFreq = 0.0f;
@@ -305,20 +308,23 @@ static int AUP_Aed_resetVariables(Aed_St* stHdl) {
   for (i = 0; i < melFbSz + 2; i++) {
     mel_points = i * (high_mel - low_mel) / ((float)melFbSz + 1.0f) + low_mel;
     hz_points = 700.0f * (powf(10.0f, mel_points / 2595.0f) - 1.0f);
-    melBinBuff[i] = (size_t)((stHdl->intFftSz + 1.0f) * hz_points / (float)AUP_AED_FS);
+    melBinBuff[i] =
+        (size_t)((stHdl->intFftSz + 1.0f) * hz_points / (float)AUP_AED_FS);
     if (i > 0 && melBinBuff[i] == melBinBuff[i - 1]) {
       return -1;
     }
   }
 
   for (j = 0; j < melFbSz; j++) {
-    for (i = melBinBuff[j]; i < melBinBuff[j+1]; i++) {
+    for (i = melBinBuff[j]; i < melBinBuff[j + 1]; i++) {
       idx = j * nBins + i;
-      melFbCoef[idx] = (float)(i - melBinBuff[j]) / (float)(melBinBuff[j+1] - melBinBuff[j]);
+      melFbCoef[idx] = (float)(i - melBinBuff[j]) /
+                       (float)(melBinBuff[j + 1] - melBinBuff[j]);
     }
-    for (i = melBinBuff[j+1]; i < melBinBuff[j+2]; i++) {
+    for (i = melBinBuff[j + 1]; i < melBinBuff[j + 2]; i++) {
       idx = j * nBins + i;
-      melFbCoef[idx] = (float)(melBinBuff[j+2] - i) / (float)(melBinBuff[j+2] - melBinBuff[j+1]);
+      melFbCoef[idx] = (float)(melBinBuff[j + 2] - i) /
+                       (float)(melBinBuff[j + 2] - melBinBuff[j + 1]);
     }
   }
 
@@ -341,16 +347,16 @@ static int AUP_Aed_resetVariables(Aed_St* stHdl) {
   return 0;
 }
 
-
 static int AUP_Aed_addOneCnter(int cnter) {
   cnter++;
   if (cnter >= 1000000000) {
-    cnter = 0; // reset every half year
+    cnter = 0;  // reset every half year
   }
-  return(cnter);
+  return (cnter);
 }
 
-static void AUP_Aed_binPowerConvert(const float* src, float* tgt, int srcNBins, int tgtNBins) {
+static void AUP_Aed_binPowerConvert(const float* src, float* tgt, int srcNBins,
+                                    int tgtNBins) {
   float rate;
   int srcIdx, tgtIdx;
   if (srcNBins == tgtNBins) {
@@ -359,7 +365,7 @@ static void AUP_Aed_binPowerConvert(const float* src, float* tgt, int srcNBins, 
   }
 
   memset(tgt, 0, sizeof(float) * tgtNBins);
-  
+
   rate = (float)(srcNBins - 1) / (float)(tgtNBins - 1);
   for (tgtIdx = 0; tgtIdx < tgtNBins; tgtIdx++) {
     srcIdx = (int)(tgtIdx * rate);
@@ -370,7 +376,8 @@ static void AUP_Aed_binPowerConvert(const float* src, float* tgt, int srcNBins, 
   return;
 }
 
-static void AUP_Aed_CalcBinPow(int nBins, const float* cmplxSpctr, float* binPow) {
+static void AUP_Aed_CalcBinPow(int nBins, const float* cmplxSpctr,
+                               float* binPow) {
   int idx, realIdx, imagIdx;
 
   // bin-0
@@ -383,13 +390,15 @@ static void AUP_Aed_CalcBinPow(int nBins, const float* cmplxSpctr, float* binPow
     realIdx = idx << 1;
     imagIdx = realIdx + 1;
 
-    binPow[idx] = cmplxSpctr[realIdx] * cmplxSpctr[realIdx] + cmplxSpctr[imagIdx] * cmplxSpctr[imagIdx];
+    binPow[idx] = cmplxSpctr[realIdx] * cmplxSpctr[realIdx] +
+                  cmplxSpctr[imagIdx] * cmplxSpctr[imagIdx];
   }
   return;
 }
 
-static int AUP_Aed_pitch_proc(void* pitchModule, const float* timeSignal, size_t timeLen,
-  const float* binPow, size_t nBins, PE_OutputData* pOut) {
+static int AUP_Aed_pitch_proc(void* pitchModule, const float* timeSignal,
+                              size_t timeLen, const float* binPow, size_t nBins,
+                              PE_OutputData* pOut) {
   PE_InputData peInData;
 
   peInData.timeSignal = timeSignal;
@@ -401,7 +410,8 @@ static int AUP_Aed_pitch_proc(void* pitchModule, const float* timeSignal, size_t
   return AUP_PE_proc(pitchModule, &peInData, pOut);
 }
 
-static int AUP_Aed_aivad_proc(Aed_St* stHdl, const float* inBinPow, float* aivadScore) {
+static int AUP_Aed_aivad_proc(Aed_St* stHdl, const float* inBinPow,
+                              float* aivadScore) {
   if (stHdl == NULL || inBinPow == NULL || aivadScore == NULL) {
     return -1;
   }
@@ -411,7 +421,7 @@ static int AUP_Aed_aivad_proc(Aed_St* stHdl, const float* inBinPow, float* aivad
   size_t melFbSz = stHdl->melFbSz;
   size_t srcOffset;
   size_t srcLen;
-  
+
   float* aivadInputFeatStack = stHdl->aivadInputFeatStack;
   float* melFbCoef = stHdl->melFilterBankCoef;
   const float* aivadFeatMean = AUP_AED_FEATURE_MEANS;
@@ -424,7 +434,8 @@ static int AUP_Aed_aivad_proc(Aed_St* stHdl, const float* inBinPow, float* aivad
   // update aivad feature buff.
   srcOffset = stHdl->feaSz;
   srcLen = (stHdl->algCtxtSz - 1) * stHdl->feaSz;
-  memmove(aivadInputFeatStack, aivadInputFeatStack + srcOffset, sizeof(float) * srcLen);
+  memmove(aivadInputFeatStack, aivadInputFeatStack + srcOffset,
+          sizeof(float) * srcLen);
   curInputFeatPtr = aivadInputFeatStack + srcLen;
 
   // cal. mel-filter-bank feature
@@ -436,18 +447,21 @@ static int AUP_Aed_aivad_proc(Aed_St* stHdl, const float* inBinPow, float* aivad
     }
     perBandValue = perBandValue / powerNormal;
     perBandValue = logf(perBandValue + AUP_AED_EPS);
-    curInputFeatPtr[i] = (perBandValue - aivadFeatMean[i]) / (aivadFeatStd[i] + AUP_AED_EPS);
+    curInputFeatPtr[i] =
+        (perBandValue - aivadFeatMean[i]) / (aivadFeatStd[i] + AUP_AED_EPS);
   }
 
   // extra feat.
   for (i = melFbSz; i < stHdl->feaSz; i++) {
-    curInputFeatPtr[i] = (stHdl->pitchFreq - aivadFeatMean[i]) / (aivadFeatStd[i] + AUP_AED_EPS);
+    curInputFeatPtr[i] =
+        (stHdl->pitchFreq - aivadFeatMean[i]) / (aivadFeatStd[i] + AUP_AED_EPS);
   }
 
   // exe. aivad
   // exe. aivad
   float aivadOutput;
-  if (stHdl->aivadInf != NULL && stHdl->aivadInf->Process(stHdl->aivadInputFeatStack, &aivadOutput) != 0) {
+  if (stHdl->aivadInf != NULL &&
+      stHdl->aivadInf->Process(stHdl->aivadInputFeatStack, &aivadOutput) != 0) {
     return -1;
   }
 
@@ -463,7 +477,8 @@ static int AUP_Aed_aivad_proc(Aed_St* stHdl, const float* inBinPow, float* aivad
   return 0;
 }
 
-static int AUP_Aed_dynamMemPrepare(Aed_St* stHdl, void* memPtrExt, size_t memSize) {
+static int AUP_Aed_dynamMemPrepare(Aed_St* stHdl, void* memPtrExt,
+                                   size_t memSize) {
   if (stHdl == NULL) {
     return -1;
   }
@@ -486,10 +501,12 @@ static int AUP_Aed_dynamMemPrepare(Aed_St* stHdl, void* memPtrExt, size_t memSiz
   // size_t nBinsBufferMemSize = AUP_AED_ALIGN8(sizeof(float) * nBins);
   // size_t spctrmMemSize = AUP_AED_ALIGN8(sizeof(float) * (nBins - 1) * 2);
 
-  inputTimeFIFOMemSize = AUP_AED_ALIGN8(sizeof(float) * stHdl->inputTimeFIFOLen);
+  inputTimeFIFOMemSize =
+      AUP_AED_ALIGN8(sizeof(float) * stHdl->inputTimeFIFOLen);
   totalMemSize += inputTimeFIFOMemSize;
 
-  inputEmphTimeFIFOMemSize = AUP_AED_ALIGN8(sizeof(float) * stHdl->inputTimeFIFOLen);
+  inputEmphTimeFIFOMemSize =
+      AUP_AED_ALIGN8(sizeof(float) * stHdl->inputTimeFIFOLen);
   totalMemSize += inputEmphTimeFIFOMemSize;
 
   aivadInputCmplxSptrmMemSize = AUP_AED_ALIGN8(sizeof(float) * stHdl->intFftSz);
@@ -498,18 +515,21 @@ static int AUP_Aed_dynamMemPrepare(Aed_St* stHdl, void* memPtrExt, size_t memSiz
   aivadInputBinPowMemSize = AUP_AED_ALIGN8(sizeof(float) * stHdl->intNBins);
   totalMemSize += aivadInputBinPowMemSize;
 
-  aivadInputFeatStackMemSize = AUP_AED_ALIGN8(sizeof(float) * stHdl->algCtxtSz * stHdl->feaSz);
+  aivadInputFeatStackMemSize =
+      AUP_AED_ALIGN8(sizeof(float) * stHdl->algCtxtSz * stHdl->feaSz);
   totalMemSize += aivadInputFeatStackMemSize;
 
-  aimdInputFeatStackMemSize = AUP_AED_ALIGN8(sizeof(float) * stHdl->algCtxtSz * stHdl->feaSz);
+  aimdInputFeatStackMemSize =
+      AUP_AED_ALIGN8(sizeof(float) * stHdl->algCtxtSz * stHdl->feaSz);
   totalMemSize += aimdInputFeatStackMemSize;
 
-  melFilterBankCoefMemSize = AUP_AED_ALIGN8(sizeof(float) * pitchInNBins * stHdl->feaSz);
+  melFilterBankCoefMemSize =
+      AUP_AED_ALIGN8(sizeof(float) * pitchInNBins * stHdl->feaSz);
   totalMemSize += melFilterBankCoefMemSize;
 
-  melFilterBinBuffMemSize = AUP_AED_ALIGN8(sizeof(size_t) * (stHdl->feaSz + 2 ));
+  melFilterBinBuffMemSize = AUP_AED_ALIGN8(sizeof(size_t) * (stHdl->feaSz + 2));
   totalMemSize += melFilterBinBuffMemSize;
-    
+
   frameRmsBuffMemSize = AUP_AED_ALIGN8(stHdl->frmRmsBufLen * sizeof(float));
   totalMemSize += frameRmsBuffMemSize;
 
@@ -560,14 +580,16 @@ static int AUP_Aed_dynamMemPrepare(Aed_St* stHdl, void* memPtrExt, size_t memSiz
   return ((int)totalMemSize);
 }
 
-static int AUP_Aed_runOneFrm(Aed_St* stHdl, const float* tSignal, int hopSz, const float* binPowPtr, int nBins) {
-  PE_OutputData peOutData = { 0,0 };
+static int AUP_Aed_runOneFrm(Aed_St* stHdl, const float* tSignal, int hopSz,
+                             const float* binPowPtr, int nBins) {
+  PE_OutputData peOutData = {0, 0};
   float aivadScore = -1.0f;
   float mediaFilterout = 0;
   int mediaIdx = (int)(AUP_AED_OUTPUT_SMOOTH_FILTER_LEN) / 2;
   int i;
 
-  if (AUP_Aed_pitch_proc(stHdl->pitchEstStPtr, tSignal, hopSz, binPowPtr, nBins, &peOutData) < 0) {
+  if (AUP_Aed_pitch_proc(stHdl->pitchEstStPtr, tSignal, hopSz, binPowPtr, nBins,
+                         &peOutData) < 0) {
     return -1;
   }
   stHdl->pitchFreq = peOutData.pitchFreq;
@@ -600,7 +622,7 @@ int AUP_Aed_create(void** stPtr) {
     return -1;
   }
 
-  tmpPtr->stCfg.enableFlag = 1; // as default, module enabled
+  tmpPtr->stCfg.enableFlag = 1;  // as default, module enabled
   tmpPtr->stCfg.fftSz = 1024;
   tmpPtr->stCfg.hopSz = 256;
   tmpPtr->stCfg.anaWindowSz = 768;
@@ -609,7 +631,7 @@ int AUP_Aed_create(void** stPtr) {
   tmpPtr->dynamCfg.extVoiceThr = 0.5f;
   tmpPtr->dynamCfg.extMusicThr = 0.5f;
   tmpPtr->dynamCfg.extEnergyThr = 10.0f;
-  tmpPtr->dynamCfg.resetFrameNum = 1875;//TODO
+  tmpPtr->dynamCfg.resetFrameNum = 1875;  // TODO
   tmpPtr->dynamCfg.pitchEstVoicedThr = AUP_AED_PITCH_EST_DEFAULT_VOICEDTHR;
 
   (*stPtr) = (void*)tmpPtr;
@@ -667,7 +689,8 @@ int AUP_Aed_memAllocate(void* stPtr, const Aed_StaticCfg* pCfg) {
 
   memcpy(&(stHdl->stCfg), &aedStatCfg, sizeof(Aed_StaticCfg));
 
-  // 2th: publish static configuration to internal statical configuration registers
+  // 2th: publish static configuration to internal statical configuration
+  // registers
   if (AUP_Aed_publishStaticCfg(stHdl) < 0) {
     return -1;
   }
@@ -726,7 +749,8 @@ int AUP_Aed_memAllocate(void* stPtr, const Aed_StaticCfg* pCfg) {
   memset(stHdl->dynamMemPtr, 0, stHdl->dynamMemSize);
 
   // 7th: setup the pointers/variable
-  if (AUP_Aed_dynamMemPrepare(stHdl, stHdl->dynamMemPtr, stHdl->dynamMemSize) < 0) {
+  if (AUP_Aed_dynamMemPrepare(stHdl, stHdl->dynamMemPtr, stHdl->dynamMemSize) <
+      0) {
     return -1;
   }
 
@@ -814,7 +838,7 @@ int AUP_Aed_proc(void* stPtr, const Aed_InputData* pIn, Aed_OutputData* pOut) {
   Analyzer_InputData analyzerInput;
   Analyzer_OutputData analyzerOutput;
   Aed_St* stHdl = (Aed_St*)(stPtr);
-  
+
   const float* binPowPtr = NULL;
   float frameRms = 0.0f;
   float frameEnergy = 0.0f;
@@ -835,18 +859,20 @@ int AUP_Aed_proc(void* stPtr, const Aed_InputData* pIn, Aed_OutputData* pOut) {
     if (pIn->binPower == NULL) {
       return -1;
     }
-    if (pIn->nBins != (int)((stHdl->stCfg.fftSz >> 1) + 1) || pIn->hopSz != (int)(stHdl->stCfg.hopSz)) {
+    if (pIn->nBins != (int)((stHdl->stCfg.fftSz >> 1) + 1) ||
+        pIn->hopSz != (int)(stHdl->stCfg.hopSz)) {
       return -1;
     }
   }
 
-  // cal. input frame energy .... 
+  // cal. input frame energy ....
   for (idx = 0; idx < pIn->hopSz; idx++) {
     frameRms += (pIn->timeSignal[idx] * pIn->timeSignal[idx]);
   }
   frameEnergy = frameRms;
   frameRms = sqrtf(frameRms / (float)pIn->hopSz);
-  memmove(stHdl->frameRmsBuff, stHdl->frameRmsBuff + 1, sizeof(float) * (stHdl->frmRmsBufLen - 1));
+  memmove(stHdl->frameRmsBuff, stHdl->frameRmsBuff + 1,
+          sizeof(float) * (stHdl->frmRmsBufLen - 1));
   stHdl->frameRmsBuff[stHdl->frmRmsBufLen - 1] = frameRms;
 
   // input signal conversion .........
@@ -854,44 +880,51 @@ int AUP_Aed_proc(void* stPtr, const Aed_InputData* pIn, Aed_OutputData* pOut) {
     return -1;
   }
 
-  //update pre-emphasis time signal FIFO
+  // update pre-emphasis time signal FIFO
   float* timeSigEphaPtr = stHdl->inputEmphTimeFIFO + stHdl->inputTimeFIFOIdx;
   for (idx = 0; idx < pIn->hopSz; idx++) {
     timeSigEphaPtr[idx] = pIn->timeSignal[idx] - 0.97f * stHdl->timeSignalPre;
     stHdl->timeSignalPre = pIn->timeSignal[idx];
   }
 
-  memcpy(stHdl->inputTimeFIFO + stHdl->inputTimeFIFOIdx, pIn->timeSignal, sizeof(float) * (pIn->hopSz));
+  memcpy(stHdl->inputTimeFIFO + stHdl->inputTimeFIFOIdx, pIn->timeSignal,
+         sizeof(float) * (pIn->hopSz));
   stHdl->inputTimeFIFOIdx += pIn->hopSz;
 
   if (stHdl->intAnalyFlag == 0) {  // directly use external spectra
-    if (stHdl->inputTimeFIFOIdx != (int)(stHdl->intHopSz) || (int)(stHdl->intNBins) != pIn->nBins) {
+    if (stHdl->inputTimeFIFOIdx != (int)(stHdl->intHopSz) ||
+        (int)(stHdl->intNBins) != pIn->nBins) {
       return -1;
     }
 
     // one-time processing ...
     stHdl->aedProcFrmCnt = AUP_Aed_addOneCnter(stHdl->aedProcFrmCnt);
     binPowPtr = pIn->binPower;
-    
+
     // update: stHdl->pitchFreq, stHdl->aivadScore
-    if (AUP_Aed_runOneFrm(stHdl, stHdl->inputTimeFIFO, (int)stHdl->intHopSz, binPowPtr, (int)stHdl->intNBins) < 0) {
+    if (AUP_Aed_runOneFrm(stHdl, stHdl->inputTimeFIFO, (int)stHdl->intHopSz,
+                          binPowPtr, (int)stHdl->intNBins) < 0) {
       return -1;
     }
 
     // update the inputTimeFIFO
     stHdl->inputTimeFIFOIdx = 0;
-  } else if (stHdl->intAnalyFlag == 1) {  // do interpolation or extrapolation with external spectra
-    if (stHdl->inputTimeFIFOIdx != (int)(stHdl->intHopSz) || (int)(stHdl->extNBins) != pIn->nBins) {
+  } else if (stHdl->intAnalyFlag ==
+             1) {  // do interpolation or extrapolation with external spectra
+    if (stHdl->inputTimeFIFOIdx != (int)(stHdl->intHopSz) ||
+        (int)(stHdl->extNBins) != pIn->nBins) {
       return -1;
     }
 
     // one-time processing ....
     stHdl->aedProcFrmCnt = AUP_Aed_addOneCnter(stHdl->aedProcFrmCnt);
-    AUP_Aed_binPowerConvert(pIn->binPower, stHdl->aivadInputBinPow, (int)stHdl->extNBins, (int)stHdl->intNBins);
+    AUP_Aed_binPowerConvert(pIn->binPower, stHdl->aivadInputBinPow,
+                            (int)stHdl->extNBins, (int)stHdl->intNBins);
     binPowPtr = stHdl->aivadInputBinPow;
 
     // update: stHdl->pitchFreq, stHdl->aivadScore
-    if (AUP_Aed_runOneFrm(stHdl, stHdl->inputTimeFIFO, (int)stHdl->intHopSz, binPowPtr, (int)stHdl->intNBins) < 0) {
+    if (AUP_Aed_runOneFrm(stHdl, stHdl->inputTimeFIFO, (int)stHdl->intHopSz,
+                          binPowPtr, (int)stHdl->intNBins) < 0) {
       return -1;
     }
 
@@ -910,27 +943,33 @@ int AUP_Aed_proc(void* stPtr, const Aed_InputData* pIn, Aed_OutputData* pOut) {
       analyzerInput.iLength = (int)stHdl->intHopSz;
       analyzerOutput.output = stHdl->aivadInputCmplxSptrm;
       analyzerOutput.oLength = (int)stHdl->intFftSz;
-      if (AUP_Analyzer_proc(stHdl->timeInAnalysis, &analyzerInput, &analyzerOutput) < 0) {
+      if (AUP_Analyzer_proc(stHdl->timeInAnalysis, &analyzerInput,
+                            &analyzerOutput) < 0) {
         return -1;
       }
 
-      AUP_Aed_CalcBinPow((int)stHdl->intNBins, stHdl->aivadInputCmplxSptrm, stHdl->aivadInputBinPow);
+      AUP_Aed_CalcBinPow((int)stHdl->intNBins, stHdl->aivadInputCmplxSptrm,
+                         stHdl->aivadInputBinPow);
       binPowPtr = stHdl->aivadInputBinPow;
 
       // update: stHdl->pitchFreq, stHdl->aivadScore
-      if (AUP_Aed_runOneFrm(stHdl, stHdl->inputTimeFIFO, (int)stHdl->intHopSz, binPowPtr, (int)stHdl->intNBins) < 0) {
+      if (AUP_Aed_runOneFrm(stHdl, stHdl->inputTimeFIFO, (int)stHdl->intHopSz,
+                            binPowPtr, (int)stHdl->intNBins) < 0) {
         return -1;
       }
 
       // update the inputTimeFIFO & inputEmphTimeFIFO.....
       if (stHdl->inputTimeFIFOIdx > (int)stHdl->intHopSz) {
-        memcpy(stHdl->inputTimeFIFO, stHdl->inputTimeFIFO + stHdl->intHopSz, sizeof(float) * (stHdl->inputTimeFIFOIdx - stHdl->intHopSz));
-        memcpy(stHdl->inputEmphTimeFIFO, stHdl->inputEmphTimeFIFO + stHdl->intHopSz, sizeof(float)* (stHdl->inputTimeFIFOIdx - stHdl->intHopSz));
+        memcpy(stHdl->inputTimeFIFO, stHdl->inputTimeFIFO + stHdl->intHopSz,
+               sizeof(float) * (stHdl->inputTimeFIFOIdx - stHdl->intHopSz));
+        memcpy(stHdl->inputEmphTimeFIFO,
+               stHdl->inputEmphTimeFIFO + stHdl->intHopSz,
+               sizeof(float) * (stHdl->inputTimeFIFOIdx - stHdl->intHopSz));
       }
       stHdl->inputTimeFIFOIdx -= (int)stHdl->intHopSz;
     }
   }
-  
+
   // write to output res.
   pOut->frameEnergy = frameEnergy / powerNormal;
   pOut->frameRms = stHdl->frameRmsBuff[0];
@@ -938,7 +977,7 @@ int AUP_Aed_proc(void* stPtr, const Aed_InputData* pIn, Aed_OutputData* pOut) {
   pOut->voiceProb = stHdl->aivadScore;
   if (pOut->voiceProb < 0.0f) {
     pOut->vadRes = -1;
-  } else if(pOut->voiceProb <= stHdl->voiceDecideThresh) {
+  } else if (pOut->voiceProb <= stHdl->voiceDecideThresh) {
     pOut->vadRes = 0;
   } else {
     pOut->vadRes = 1;

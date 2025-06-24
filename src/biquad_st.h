@@ -5,8 +5,8 @@
 #include "biquad.h"
 
 typedef struct Biquad_St_ {
-  void* dynamMemPtr;          // memory pointer holding the dynamic memory
-  size_t dynamMemSize;        // size of the buffer *dynamMemPtr
+  void* dynamMemPtr;    // memory pointer holding the dynamic memory
+  size_t dynamMemSize;  // size of the buffer *dynamMemPtr
 
   // Static Configuration
   Biquad_StaticCfg stCfg;
@@ -23,9 +23,9 @@ typedef struct Biquad_St_ {
   float* inputTempBuf;  // [maxNSample]
   float sectW[AGORA_UAP_BIQUAD_MAX_SECTION][2];
   // each section's register
-  float* sectOutputBuf[AGORA_UAP_BIQUAD_MAX_SECTION];  //[AGORA_UAP_BIQUAD_MAX_SECTION][maxNSample]
-                                                       // each section's output buffer
-
+  float* sectOutputBuf
+      [AGORA_UAP_BIQUAD_MAX_SECTION];  //[AGORA_UAP_BIQUAD_MAX_SECTION][maxNSample]
+                                       // each section's output buffer
 } Biquad_St;
 
 #endif  // __BIQUAD_ST_H__

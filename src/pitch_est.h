@@ -1,9 +1,9 @@
 /*
  * Copyright (c) [2025] [Agora]. All rights reserved.
- * 
+ *
  * Original LPCNet code copyright:
  *   Copyright (c) Mozilla Foundation. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *   1. Redistributions of source code must retain the above copyright notice, 
@@ -14,7 +14,7 @@
  *   3. Neither the name of the copyright holder nor the names of its contributors
  *      may be used to endorse or promote products derived from this software without
  *      specific prior written permission.
- * 
+ *
  * Full license text available in the root directory LICENSE file.
  */
 
@@ -31,49 +31,51 @@
 #define AUP_PE_FS (16000)
 // assumed sampling freq. of this module
 
-// Configuration Parameters, which impacts dynamic memory occupation, can only be set during
-// allocation
+// Configuration Parameters, which impacts dynamic memory occupation, can only
+// be set during allocation
 typedef struct PE_StaticCfg_ {
-  size_t fftSz;  // fft-size, only support: 128, 256, 512, 1024
+  size_t fftSz;        // fft-size, only support: 128, 256, 512, 1024
   size_t anaWindowSz;  // analysis fft-Window Size, will be used in LPC estimate
-  size_t hopSz;  // fft-Hop Size, will be used to check
-  int useLPCPreFiltering;  
+  size_t hopSz;        // fft-Hop Size, will be used to check
+  int useLPCPreFiltering;
   // 0: use raw pcm to estimate pitch
   // 1: use LPC prefiltering before pitch estimation
-  size_t procFs; // internal processing sampling rate
+  size_t procFs;  // internal processing sampling rate
   // 2000/4000/8000/16000
 } PE_StaticCfg;
 
 // Configuraiton parameters which can be modified/set every frames
 typedef struct PE_DynamCfg_ {
-  float voicedThr;  // threshold on frame correlation coeff to label if voice present
+  float voicedThr;  // threshold on frame correlation coeff to label if voice
+                    // present
   // suggested value: procFs == 2KHz, Yes: 0.45, No: 0.4
 } PE_DynamCfg;
 
-// Spectrum are assumed to be generated with time-domain samples in [-32768, 32767]
-// WITH LEC blowup protection
-// Note: the input timeSignal has to be in 16KHz sampling-rate
+// Spectrum are assumed to be generated with time-domain samples in [-32768,
+// 32767] WITH LEC blowup protection Note: the input timeSignal has to be in
+// 16KHz sampling-rate
 typedef struct PE_InputData_ {
-  const float* timeSignal;  // [hopSz]   // this frame's input signal, in [-32768, 32767]
-  int hopSz;  // should be equal to StaticCfg->hopSz
-  
-  // if useLPCPreFiltering == 0, the following two input argument 
+  const float*
+      timeSignal;  // [hopSz]   // this frame's input signal, in [-32768, 32767]
+  int hopSz;       // should be equal to StaticCfg->hopSz
+
+  // if useLPCPreFiltering == 0, the following two input argument
   //    are not necessary
-  const float* inBinPow;  // [nBins], bin-wise power 
+  const float* inBinPow;  // [nBins], bin-wise power
   int nBins;
 } PE_InputData;
 
 typedef struct PE_OutputData_ {
   float pitchFreq;  // the current estimated pitch freq.
   // <= 0: no voice
-  int voiced;   // 0: no-voice, 1: voice-present
+  int voiced;  // 0: no-voice, 1: voice-present
 } PE_OutputData;
 
 typedef struct PE_GetData_ {
   float pitchFreq;  // the current estimated pitch freq.
   // <= 0: no voice
-  int voiced;   // 0: no-voice, 1: voice-present
-}PE_GetData;
+  int voiced;  // 0: no-voice, 1: voice-present
+} PE_GetData;
 
 #ifdef __cplusplus
 extern "C" {
@@ -178,7 +180,6 @@ int AUP_PE_setDynamCfg(void* stPtr, const PE_DynamCfg* pCfg);
  *                        -1 - Error
  */
 int AUP_PE_getStaticCfg(const void* stPtr, PE_StaticCfg* pCfg);
-
 
 /****************************************************************************
  * AUP_PE_getDynamCfg(...)

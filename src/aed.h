@@ -7,17 +7,18 @@
 #define AUP_AED_MAX_FFT_SZ (1024)  // the max. fft-size supported by VAD module
 #define AUP_AED_MAX_NBINS ((AUP_AED_MAX_FFT_SZ >> 1) + 1)
 
-#define AUP_AED_FS (16000)   // assumed input freq.
+#define AUP_AED_FS (16000)  // assumed input freq.
 
-// Configuration Parameters, which impacts dynamic memory occupation, can only be set during
-// allocation
+// Configuration Parameters, which impacts dynamic memory occupation, can only
+// be set during allocation
 typedef struct Aed_StaticCfg_ {
   int enableFlag;  // flag to enable or disable this module
   // 0: disable, o.w.: enable
-  size_t fftSz;  // fft-size, only support: 128, 256, 512, 1024
-  size_t hopSz;  // fft-Hop Size, will be used to check
-  size_t anaWindowSz;  // fft-window Size, will be used to calc rms
-  int frqInputAvailableFlag;  // whether Aed_InputData will contain external freq. power-sepctra
+  size_t fftSz;               // fft-size, only support: 128, 256, 512, 1024
+  size_t hopSz;               // fft-Hop Size, will be used to check
+  size_t anaWindowSz;         // fft-window Size, will be used to calc rms
+  int frqInputAvailableFlag;  // whether Aed_InputData will contain external
+                              // freq. power-sepctra
 } Aed_StaticCfg;
 
 // Configuraiton parameters which can be modified/set every frames
@@ -26,26 +27,30 @@ typedef struct Aed_DynamCfg_ {
   float extMusicThr;        // threshold for ai based music decision [0,1]
   float extEnergyThr;       // threshold for energy based vad decision [0, ---]
   size_t resetFrameNum;     // frame number for aivad reset [1875, 75000]
-  float pitchEstVoicedThr;  // threshold for pitch-estimator to output estimated pitch
+  float pitchEstVoicedThr;  // threshold for pitch-estimator to output estimated
+                            // pitch
 } Aed_DynamCfg;
 
-// Spectrum are assumed to be generated with time-domain samples in [-32768, 32767]
-// with or without pre-emphasis operation
+// Spectrum are assumed to be generated with time-domain samples in [-32768,
+// 32767] with or without pre-emphasis operation
 typedef struct Aed_InputData_ {
-  const float* binPower;    // [NBins], power spectrum of 16KHz samples
+  const float* binPower;  // [NBins], power spectrum of 16KHz samples
   int nBins;
-  const float* timeSignal;  // [hopSz]   // this frame's input signal, in [-32768, 32767]
-  int hopSz;  // should be equal to StaticCfg->hopSz
+  const float*
+      timeSignal;  // [hopSz]   // this frame's input signal, in [-32768, 32767]
+  int hopSz;       // should be equal to StaticCfg->hopSz
 } Aed_InputData;
 
 // return data from statistical ns module
 typedef struct Aed_OutputData_ {
-  float frameEnergy;       // frame energy for input normalized data
-  float frameRms;          // rms for input int16 data
-  int energyVadRes;        // vad res 0/1 with extEnergyThreshold based on input frame energy
-  float voiceProb;         // vad score [0,1]
-  int vadRes;              // vad res 0/1 with extVoiceThr based on ai method, t + 16ms res correspond to the t input
-  float pitchFreq;         // estimated pitch freq.
+  float frameEnergy;  // frame energy for input normalized data
+  float frameRms;     // rms for input int16 data
+  int energyVadRes;  // vad res 0/1 with extEnergyThreshold based on input frame
+                     // energy
+  float voiceProb;   // vad score [0,1]
+  int vadRes;  // vad res 0/1 with extVoiceThr based on ai method, t + 16ms res
+               // correspond to the t input
+  float pitchFreq;  // estimated pitch freq.
 } Aed_OutputData;
 
 #ifdef __cplusplus

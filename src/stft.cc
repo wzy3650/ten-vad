@@ -17,8 +17,8 @@ static int AUP_Analyzer_checkStatCfg(Analyzer_StaticCfg* pCfg) {
   }
 
   if (pCfg->fft_size != 256 && pCfg->fft_size != 512 &&
-    pCfg->fft_size != 1024 && pCfg->fft_size != 2048 &&
-    pCfg->fft_size != 4096) {
+      pCfg->fft_size != 1024 && pCfg->fft_size != 2048 &&
+      pCfg->fft_size != 4096) {
     return -1;
   }
 
@@ -42,12 +42,12 @@ static int AUP_Analyzer_publishStaticCfg(Analyzer_St* stHdl) {
     return -1;
   }
   pStatCfg = (const Analyzer_StaticCfg*)(&(stHdl->stCfg));
-  
+
   stHdl->nBins = (pStatCfg->fft_size >> 1) + 1;
   if (pStatCfg->ana_win_coeff != NULL) {
-    memcpy(stHdl->windowCoffCopy, pStatCfg->ana_win_coeff, sizeof(float) * pStatCfg->win_len);
-  }
-  else {
+    memcpy(stHdl->windowCoffCopy, pStatCfg->ana_win_coeff,
+           sizeof(float) * pStatCfg->win_len);
+  } else {
     for (idx = 0; idx < AUP_STFT_MAX_FFTSZ; idx++) {
       stHdl->windowCoffCopy[idx] = 1.0f;
     }
@@ -60,7 +60,8 @@ static int AUP_Analyzer_resetVariables(Analyzer_St* stHdl) {
   return 0;
 }
 
-static int AUP_Analyzer_dynamMemPrepare(Analyzer_St* stHdl, void* memPtrExt, size_t memSize) {
+static int AUP_Analyzer_dynamMemPrepare(Analyzer_St* stHdl, void* memPtrExt,
+                                        size_t memSize) {
   int inputQMemSz = 0;
   int fftInputBufMemSz = 0;
   int totalMemSize = 0;
@@ -69,10 +70,12 @@ static int AUP_Analyzer_dynamMemPrepare(Analyzer_St* stHdl, void* memPtrExt, siz
   inputQMemSz = AUP_STFT_ALIGN8(sizeof(float) * (stHdl->stCfg.win_len + 4));
   totalMemSize += inputQMemSz;
 
-  fftInputBufMemSz = AUP_STFT_ALIGN8(sizeof(float) * (stHdl->stCfg.fft_size + 4));
+  fftInputBufMemSz =
+      AUP_STFT_ALIGN8(sizeof(float) * (stHdl->stCfg.fft_size + 4));
   totalMemSize += fftInputBufMemSz;
 
-  // if no external memory provided, we are only profiling the memory requirement
+  // if no external memory provided, we are only profiling the memory
+  // requirement
   if (memPtrExt == NULL) {
     return (totalMemSize);
   }
@@ -193,7 +196,8 @@ int AUP_Analyzer_memAllocate(void* stPtr, const Analyzer_StaticCfg* pCfg) {
   memset(stHdl->dynamMemPtr, 0, stHdl->dynamMemSize);
 
   // 6th: setup the pointers/variable
-  if (AUP_Analyzer_dynamMemPrepare(stHdl, stHdl->dynamMemPtr, stHdl->dynamMemSize) < 0) {
+  if (AUP_Analyzer_dynamMemPrepare(stHdl, stHdl->dynamMemPtr,
+                                   stHdl->dynamMemSize) < 0) {
     return -1;
   }
 
@@ -228,19 +232,20 @@ int AUP_Analyzer_getStaticCfg(const void* stPtr, Analyzer_StaticCfg* pCfg) {
   return 0;
 }
 
-int AUP_Analyzer_proc(void* stPtr,
-	const Analyzer_InputData* pIn, Analyzer_OutputData* pOut) {
-	Analyzer_St* stHdl = NULL;
+int AUP_Analyzer_proc(void* stPtr, const Analyzer_InputData* pIn,
+                      Analyzer_OutputData* pOut) {
+  Analyzer_St* stHdl = NULL;
   int hopSz, fftSz, winLen, nBins;
   int idx = 0;
-	
-	if (stPtr == NULL || pIn == NULL || pIn->input == NULL || pOut == NULL ||
-      pOut->output == NULL) {
-		return -1;
-	}
-	stHdl = (Analyzer_St*)(stPtr);
 
-  if (pIn->iLength != stHdl->stCfg.hop_size || pOut->oLength < stHdl->stCfg.fft_size) {
+  if (stPtr == NULL || pIn == NULL || pIn->input == NULL || pOut == NULL ||
+      pOut->output == NULL) {
+    return -1;
+  }
+  stHdl = (Analyzer_St*)(stPtr);
+
+  if (pIn->iLength != stHdl->stCfg.hop_size ||
+      pOut->oLength < stHdl->stCfg.fft_size) {
     return -1;
   }
   hopSz = stHdl->stCfg.hop_size;
@@ -248,16 +253,16 @@ int AUP_Analyzer_proc(void* stPtr,
   nBins = (fftSz >> 1) + 1;
   winLen = stHdl->stCfg.win_len;
 
-	memset(pOut->output, 0, sizeof(float) * pOut->oLength);
-  memmove(stHdl->inputQ, stHdl->inputQ + hopSz, sizeof(float) * (winLen - hopSz));
+  memset(pOut->output, 0, sizeof(float) * pOut->oLength);
+  memmove(stHdl->inputQ, stHdl->inputQ + hopSz,
+          sizeof(float) * (winLen - hopSz));
   memcpy(stHdl->inputQ + (winLen - hopSz), pIn->input, sizeof(float) * hopSz);
 
-	if (stHdl->stCfg.ana_win_coeff != NULL) {
+  if (stHdl->stCfg.ana_win_coeff != NULL) {
     for (idx = 0; idx < winLen; idx++) {
       stHdl->fftInputBuf[idx] = stHdl->inputQ[idx] * stHdl->windowCoffCopy[idx];
     }
-	}
-  else {
+  } else {
     for (idx = 0; idx < winLen; idx++) {
       stHdl->fftInputBuf[idx] = stHdl->inputQ[idx];
     }
