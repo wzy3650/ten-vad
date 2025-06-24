@@ -1,5 +1,5 @@
 /*
- * Copyright (c) [2025] [Agora]. All rights reserved.
+ * Copyright © 2025 Agora. All rights reserved.
  *
  * This file contains modified code derived from LPCNet (https://github.com/mozilla/LPCNet),
  * specifically from the following functions:
@@ -7,7 +7,7 @@
  *   - process_superframe() in lpcnet_enc.cc
  *
  * Original LPCNet code copyright:
- *   Copyright (c) Mozilla Foundation. All rights reserved.
+ *   Copyright © Mozilla Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
